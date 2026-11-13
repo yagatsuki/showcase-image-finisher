@@ -47,9 +47,10 @@ public static class ImageFinisher
         unsafe
         {
             fixed (byte* p = rgba)
-                src.InstallPixels(
-                    new SKImageInfo(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul),
-                    (IntPtr)p, w * 4);
+                if (!src.InstallPixels(
+                        new SKImageInfo(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul),
+                        (IntPtr)p, w * 4))
+                    throw new InvalidOperationException("画像バッファの取り込みに失敗しました");
         }
         using var flat = new SKBitmap(new SKImageInfo(w, h, SKColorType.Rgb888x, SKAlphaType.Opaque));
         using (var canvas = new SKCanvas(flat))
@@ -109,11 +110,13 @@ public static class ImageFinisher
         unsafe
         {
             fixed (byte* p = rgba)
-                bmp.InstallPixels(
-                    new SKImageInfo(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul),
-                    (IntPtr)p, w * 4);
+                if (!bmp.InstallPixels(
+                        new SKImageInfo(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul),
+                        (IntPtr)p, w * 4))
+                    throw new InvalidOperationException("画像バッファの取り込みに失敗しました");
         }
-        using var pixmap = bmp.PeekPixels();
+        using var pixmap = bmp.PeekPixels()
+            ?? throw new InvalidOperationException("画像ピクセルの取得に失敗しました");
         using var ms = new MemoryStream();
         var ok = format == OutputFormat.Webp
             ? pixmap.Encode(ms, new SKWebpEncoderOptions(SKWebpEncoderCompression.Lossless, 100))

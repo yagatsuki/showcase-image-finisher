@@ -19,14 +19,39 @@ public static class JxlEncoder
 {
     private const string Dll = "jxl";
 
-    public static bool IsAvailable
+    static JxlEncoder()
     {
-        get
+        // Resolve jxl.dll strictly from the exe's own folder, regardless of
+        // the process working directory or PATH.
+        NativeLibrary.SetDllImportResolver(typeof(JxlEncoder).Assembly, (name, asm, path) =>
         {
-            try { _ = JxlEncoderVersion(); return true; }
-            catch (DllNotFoundException) { return false; }
-            catch (EntryPointNotFoundException) { return false; }
-            catch (BadImageFormatException) { return false; }
+            if (!name.Equals(Dll, StringComparison.OrdinalIgnoreCase)) return IntPtr.Zero;
+            var candidate = Path.Combine(AppContext.BaseDirectory, "jxl.dll");
+            return File.Exists(candidate) && NativeLibrary.TryLoad(candidate, out var handle)
+                ? handle : IntPtr.Zero;
+        });
+    }
+
+    public static bool IsAvailable => Diagnose().StartsWith("利用できます", StringComparison.Ordinal);
+
+    /// <summary>Human-readable diagnosis of the jxl.dll situation.</summary>
+    public static string Diagnose()
+    {
+        var dir = AppContext.BaseDirectory;
+        var dll = Path.Combine(dir, "jxl.dll");
+        var threads = Path.Combine(dir, "jxl_threads.dll");
+        if (!File.Exists(dll))
+            return $"jxl.dll が exe のフォルダにありません（{dir}）";
+        try
+        {
+            var version = JxlEncoderVersion();
+            return $"利用できます（libjxl {version / 1_000_000}.{version / 1000 % 1000}.{version % 1000}）";
+        }
+        catch (Exception ex)
+        {
+            var extra = File.Exists(threads) ? "" : "、jxl_threads.dll もありません";
+            return $"jxl.dll はありますが読み込めませんでした: {ex.GetType().Name}: {ex.Message}{extra}" +
+                   "（VC++ 再頒布可能ランタイムの不足でもこの状態になります）";
         }
     }
 

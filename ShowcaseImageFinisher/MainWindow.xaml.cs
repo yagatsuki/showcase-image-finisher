@@ -39,9 +39,8 @@ public partial class MainWindow : Window
         ModelCombo.DisplayMemberPath = nameof(ModelDef.Display);
         ModelCombo.SelectedIndex = 0;
         FormatCombo.SelectedIndex = 1; // WebP (lossless)
-        JxlNote.Text = JxlEncoder.IsAvailable
-            ? "JPEG XL: jxl.dll を検出しました（利用できます）。"
-            : "JPEG XL: jxl.dll が見つからないため選んでもエラーになります。libjxl 公式リリースの jxl.dll / jxl_threads.dll を exe と同じフォルダに置くと使えます。PNG / WebP はそのまま使えます。";
+        JxlNote.Text = "JPEG XL: " + JxlEncoder.Diagnose() +
+            "（libjxl 公式リリースの jxl.dll / jxl_threads.dll を exe と同じフォルダに置くと使えます。PNG / WebP はそのまま使えます）";
         UpdateCount();
     }
 
@@ -168,9 +167,13 @@ public partial class MainWindow : Window
             Log("ファイルがありません。ドロップするか、ドロップエリアをクリックして追加してください。");
             return;
         }
-        var def = (ModelDef)ModelCombo.SelectedItem;
-        var format = Enum.Parse<OutputFormat>(
-            ((System.Windows.Controls.ComboBoxItem)FormatCombo.SelectedItem).Tag.ToString()!);
+        var def = ModelCombo.SelectedItem as ModelDef ?? ModelDef.IsNet;
+        var format = (FormatCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() switch
+        {
+            "Webp" => OutputFormat.Webp,
+            "JpegXl" => OutputFormat.JpegXl,
+            _ => OutputFormat.Png,
+        };
 
         SetRunning(true);
         _cts = new CancellationTokenSource();
@@ -219,7 +222,7 @@ public partial class MainWindow : Window
                 catch (Exception ex)
                 {
                     item.Status = $"エラー: {ex.Message}";
-                    Log($"{item.FileName}: エラー {ex.Message}");
+                    Log($"{item.FileName}: エラー {ex}");
                 }
                 Bar.Value++;
             }
@@ -231,7 +234,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Log($"エラー: {ex.Message}");
+            Log($"エラー: {ex}");
         }
         finally
         {

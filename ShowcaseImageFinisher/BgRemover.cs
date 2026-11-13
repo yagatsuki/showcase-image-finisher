@@ -55,6 +55,9 @@ public static class BgRemover
         var input = NamedOnnxValue.CreateFromTensor(session.InputMetadata.Keys.First(), tensor);
         using var results = session.Run(new[] { input });
         var output = results.First().AsTensor<float>();
+        if (output.Dimensions.Length != 4)
+            throw new InvalidOperationException(
+                $"モデルの出力形式が想定と異なります (shape: {string.Join("x", output.Dimensions.ToArray())})");
 
         // Post-process like rembg: min-max normalize channel 0, scale to
         // bytes, then resize the mask back to the original size.
@@ -77,9 +80,10 @@ public static class BgRemover
         unsafe
         {
             fixed (byte* p = rgb)
-                src.InstallPixels(
-                    new SKImageInfo(w, h, SKColorType.Rgb888x, SKAlphaType.Opaque),
-                    (IntPtr)p, w * 3);
+                if (!src.InstallPixels(
+                        new SKImageInfo(w, h, SKColorType.Rgb888x, SKAlphaType.Opaque),
+                        (IntPtr)p, w * 3))
+                    throw new InvalidOperationException("画像バッファの取り込みに失敗しました");
         }
         using var dst = src.Resize(
                 new SKImageInfo(nw, nh, SKColorType.Rgb888x, SKAlphaType.Opaque), Sampling)
@@ -95,9 +99,10 @@ public static class BgRemover
         unsafe
         {
             fixed (byte* p = gray)
-                src.InstallPixels(
-                    new SKImageInfo(w, h, SKColorType.Gray8, SKAlphaType.Opaque),
-                    (IntPtr)p, w);
+                if (!src.InstallPixels(
+                        new SKImageInfo(w, h, SKColorType.Gray8, SKAlphaType.Opaque),
+                        (IntPtr)p, w))
+                    throw new InvalidOperationException("マスクバッファの取り込みに失敗しました");
         }
         using var dst = src.Resize(
                 new SKImageInfo(nw, nh, SKColorType.Gray8, SKAlphaType.Opaque), Sampling)
