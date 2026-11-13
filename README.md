@@ -1,57 +1,93 @@
-# Showcase Image Creator
+# Showcase Image Finisher
 
-コレクションのカタログ／ショーケース用画像を作る WPF アプリです。商品写真の仕上げをまとめて行います。処理内容は CLI 版
-`finish_image.py` と同じで、背景除去 → 透明余白のトリミング → 可逆出力
-を、複数ファイルに対して一括で行います。
+コレクションのカタログ／ショーケース用画像を作るための、Windows 向け
+画像仕上げツールです。商品写真に対して **背景除去 → 透明余白の
+トリミング → 可逆出力** を、複数ファイルまとめて一括で行います。
+
+```mermaid
+flowchart LR
+    A[商品写真<br/>PNG / JPEG / WebP など] --> B[背景除去<br/>ONNX モデル]
+    B --> C[透明余白を<br/>輪郭までトリミング]
+    C --> D[可逆で保存<br/>PNG / WebP / JPEG XL]
+```
+
+## 特徴
+
+- **ドラッグ＆ドロップ対応** ― ドロップエリアへファイルを落とすか、
+  クリックで選択。フォルダを落とすと中の画像を読み込みます
+- **複数ファイルを一括処理** ― 1件ごとに進み具合と結果を表示し、
+  途中で中止もできます
+- **出力はすべて可逆** ― PNG / WebP（可逆）/ JPEG XL（可逆）から選択
+- **背景除去は rembg と同一方式** ― 同じ ONNX モデルを使い、前処理
+  （リサイズ → 画像の最大値で正規化 → チャンネルごとの標準化）も
+  rembg の実装に合わせてあります（本体の出力と一致することを
+  検証済み）。Python のインストールは不要です
+- **トリミングは輪郭いっぱい** ― 背景除去で生じる微小なα値のノイズ
+  （α ≤ 8）を透明として掃除してから切り取るため、被写体が小さく
+  ならない、余白のない仕上がりになります
 
 ## 使い方
 
-- ドロップエリアへ画像ファイルをドロップするか、エリアをクリックして
-  ファイルを選択します（複数選択可。フォルダをドロップすると、中の
-  画像ファイルを読み込みます）
-- 背景除去モデル、出力形式、出力先、接尾辞を設定して「実行」
-- 出力先は「入力と同じフォルダ」か「指定フォルダ」から選べます。
-  同名ファイルがある場合はスキップします（「同名ファイルを上書き」
-  チェックで上書きに変更可）
+1. 画像ファイルをドロップするか、ドロップエリアをクリックして
+   ファイルを追加します（複数選択可）
+2. 背景除去モデル、出力形式、出力先、ファイル名の接尾辞
+   （初期値 `_finished`）を設定します
+3. 「実行」を押します
 
-## 入力形式
+出力先は「入力と同じフォルダ」か「指定フォルダ」から選べます。
+同名ファイルがある場合はスキップします（「同名ファイルを上書き」
+をチェックすると上書きします）。
 
-PNG / JPEG / WebP / BMP / GIF / TIFF / ICO / AVIF / HEIC / JPEG XL など
-（デコードは SkiaSharp に依存します。環境によって読めない形式は、
-そのファイルだけエラーとして表示されます）
+## 対応形式
 
-## 出力形式（すべて可逆）
-
-- PNG（可逆）
-- WebP（可逆）
-- JPEG XL（可逆）― 別途 jxl.dll が必要です（下記）
+| 入力 | PNG / JPEG / WebP / BMP / GIF / TIFF / ICO / AVIF / HEIC / JPEG XL など（デコードは SkiaSharp に依存します。環境によって読めない形式は、そのファイルだけエラーとして表示されます） |
+|---|---|
+| 出力 | PNG（可逆）、WebP（可逆）、JPEG XL（可逆・要 jxl.dll） |
 
 ## 背景除去モデル
 
-rembg（danielgatis/rembg）と同じ ONNX モデルを使い、前処理
-（リサイズ → 画像の最大値で割る → チャンネルごとの正規化）も rembg と
-同一にしてあります（rembg 本体の出力との一致を検証済み）。
-
-- isnet-general-use（高品質・重め）
-- u2net（標準）
-- u2netp（高速・軽量）
-
 初回実行時に、選択したモデルを
-`%LOCALAPPDATA%\ShowcaseImageFinisher\models` へ自動ダウンロードします
-（MD5 検証付き）。
+`%LOCALAPPDATA%\ShowcaseImageFinisher\models` へ自動ダウンロード
+します（配布元の MD5 で検証します）。
+
+| モデル | 特徴 |
+|---|---|
+| isnet-general-use | 高品質・重め（入力 1024×1024） |
+| u2net | 標準（入力 320×320） |
+| u2netp | 高速・軽量（入力 320×320） |
+
+モデルは [rembg](https://github.com/danielgatis/rembg) の公式配布
+（ONNX 形式）をそのまま利用しています。
 
 ## JPEG XL を使う場合
 
 libjxl 公式リリース（0.11 以降）の Windows 用バイナリから
 `jxl.dll` と `jxl_threads.dll` を取り出し、このアプリの exe と
-同じフォルダに置いてください。無い場合は JPEG XL だけが
-エラーになり、PNG / WebP はそのまま使えます。
+同じフォルダに置いてください。無い場合は JPEG XL だけがエラーに
+なり、PNG / WebP はそのまま使えます。
 
-## ビルド
+- libjxl: https://github.com/libjxl/libjxl/releases
 
-Visual Studio 2022 と .NET 8 SDK が必要です。
-`ShowcaseImageFinisher.sln` を開いてビルドしてください。
-実行には .NET 8 Desktop Runtime が必要です
-（フレームワーク依存の構成です）。
+## ビルドと実行
 
-使用ライブラリ: ONNX Runtime、SkiaSharp、libjxl（任意）
+- Visual Studio 2022 と .NET 8 SDK で `ShowcaseImageFinisher.sln`
+  を開いてビルドします
+- 実行には .NET 8 Desktop Runtime が必要です
+  （フレームワーク依存の構成です）
+
+## 使用ライブラリ
+
+- [ONNX Runtime](https://onnxruntime.ai/) ― 背景除去モデルの実行
+- [SkiaSharp](https://github.com/mono/SkiaSharp) ― 画像の入出力と加工
+- [libjxl](https://github.com/libjxl/libjxl) ― JPEG XL 出力（任意、DLL を別途配置）
+
+---
+
+## Summary (English)
+
+A Windows (WPF) batch tool that finishes product photos for collection
+catalogs and showcases: background removal with the same ONNX models
+and preprocessing as rembg (verified to match rembg's output), tight
+trimming of transparent margins (cleaning near-zero alpha noise first),
+and lossless export to PNG, WebP, or JPEG XL (via libjxl, DLL not
+bundled). Drag & drop or click to add files, process many at once.
