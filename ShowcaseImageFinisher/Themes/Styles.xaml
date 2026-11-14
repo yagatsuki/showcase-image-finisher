@@ -236,10 +236,17 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <ContentPresenter ContentSource="Header"
-                                                  RecognizesAccessKey="True"
-                                                  VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Margin="28,0,0,0"
+                                <!-- A TextBlock bound to Header (not a
+                                     ContentPresenter) so the header text
+                                     actually follows the item Foreground:
+                                     a presenter-generated TextBlock picks
+                                     up the implicit TextBlock style and
+                                     ignores both the normal foreground
+                                     set here and the disabled one. -->
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                <TextBlock x:Name="GestureText" Grid.Column="1" Margin="28,0,0,0"
                                            VerticalAlignment="Center"
                                            Foreground="{DynamicResource SubTextBrush}"
                                            Text="{TemplateBinding InputGestureText}"/>
@@ -250,7 +257,8 @@
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
+                                <Setter Property="Foreground" Value="{DynamicResource DisabledTextBrush}"/>
+                                <Setter TargetName="GestureText" Property="Foreground" Value="{DynamicResource DisabledTextBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

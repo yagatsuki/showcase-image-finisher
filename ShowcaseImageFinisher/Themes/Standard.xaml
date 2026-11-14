@@ -32,6 +32,7 @@
     <SolidColorBrush x:Key="DropFillBrush" Color="#F7F7F7"/>
     <SolidColorBrush x:Key="DropStrokeBrush" Color="#ABADB3"/>
     <SolidColorBrush x:Key="SplitterBrush" Color="#E5E5E5"/>
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="#6D6D6D"/>
     <DrawingBrush x:Key="CheckerBrush" TileMode="Tile"
                   Viewport="0,0,16,16" ViewportUnits="Absolute">
         <DrawingBrush.Drawing>
