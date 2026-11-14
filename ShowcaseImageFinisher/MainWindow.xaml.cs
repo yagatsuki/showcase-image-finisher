@@ -5,6 +5,7 @@ using System.Windows.Interop;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using Microsoft.Win32;
 
 namespace ShowcaseImageFinisher;
@@ -115,6 +116,10 @@ public partial class MainWindow : Window
         _theme = ThemeManager.Normalize(_settings.Theme);
         foreach (System.Windows.Controls.ComboBoxItem it in ThemeCombo.Items)
             if (it.Tag?.ToString() == _theme) { ThemeCombo.SelectedItem = it; break; }
+        FileList.FontSize = _settings.ListFontSize;
+        foreach (System.Windows.Controls.ComboBoxItem it in ListFontCombo.Items)
+            if (double.TryParse(it.Tag?.ToString(), out var fs) && fs == _settings.ListFontSize)
+            { ListFontCombo.SelectedItem = it; break; }
         if (!string.IsNullOrWhiteSpace(_settings.Suffix)) SuffixBox.Text = _settings.Suffix;
         if (_settings.UseCustomDir) OutDirRadio.IsChecked = true;
         else OutSameRadio.IsChecked = true;
@@ -144,6 +149,7 @@ public partial class MainWindow : Window
         _settings.Padding = ParsePadding();
         _settings.SizePriority = SizePriorityCheck.IsChecked == true;
         _settings.Theme = _theme;
+        _settings.ListFontSize = FileList.FontSize;
         if (PreviewCard.Visibility == Visibility.Visible && PreviewColumn.ActualWidth >= 120)
             _settings.PreviewWidth = PreviewColumn.ActualWidth;
         SettingsStore.Save(_settings);
@@ -151,6 +157,92 @@ public partial class MainWindow : Window
 
     private int ParsePadding() =>
         Math.Clamp(int.TryParse(PaddingBox.Text, out var v) ? v : 0, 0, 200);
+
+    private void ListFontCombo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_applyingSettings) return;
+        var tag = (ListFontCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+        if (double.TryParse(tag, out var fs)) FileList.FontSize = fs;
+    }
+
+    // ---------- copy (list rows / log lines) ----------
+
+    private List<JobItem> SelectedOrdered() =>
+        _items.Where(i => FileList.SelectedItems.Contains(i)).ToList();
+
+    private void CopyTextToClipboard(string text, string what)
+    {
+        try
+        {
+            Clipboard.SetText(text);
+            Log($"{what}をコピーしました");
+        }
+        catch (Exception ex) { Log($"コピーに失敗しました: {ex.Message}"); }
+    }
+
+    private void CopyRows_Click(object sender, RoutedEventArgs e)
+    {
+        var sel = SelectedOrdered();
+        if (sel.Count == 0) return;
+        var text = string.Join("\r\n", sel.Select(i =>
+            $"{i.FileName}\t{i.SizeText}\t{i.Status}\t{i.OutputPath ?? ""}"));
+        CopyTextToClipboard(text, $"選択行 {sel.Count} 件");
+    }
+
+    private void CopyNames_Click(object sender, RoutedEventArgs e)
+    {
+        var sel = SelectedOrdered();
+        if (sel.Count == 0) return;
+        CopyTextToClipboard(string.Join("\r\n", sel.Select(i => i.FileName)),
+            $"ファイル名 {sel.Count} 件");
+    }
+
+    private void CopyOutputPaths_Click(object sender, RoutedEventArgs e)
+    {
+        var paths = SelectedOrdered()
+            .Where(i => !string.IsNullOrEmpty(i.OutputPath))
+            .Select(i => i.OutputPath!).ToList();
+        if (paths.Count == 0) { Log("出力ファイルのある選択行がありません"); return; }
+        CopyTextToClipboard(string.Join("\r\n", paths), $"出力パス {paths.Count} 件");
+    }
+
+    private void CopyInputPaths_Click(object sender, RoutedEventArgs e)
+    {
+        var sel = SelectedOrdered();
+        if (sel.Count == 0) return;
+        CopyTextToClipboard(string.Join("\r\n", sel.Select(i => i.FullPath)),
+            $"入力パス {sel.Count} 件");
+    }
+
+    private void FileList_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control
+            && FileList.SelectedItems.Count > 0)
+        {
+            CopyRows_Click(sender, e);
+            e.Handled = true;
+        }
+    }
+
+    private void FileListContextMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        var hasSel = FileList.SelectedItems.Count > 0;
+        CopyRowsItem.IsEnabled = hasSel;
+        CopyNamesItem.IsEnabled = hasSel;
+        CopyInputItem.IsEnabled = hasSel;
+        CopyOutputItem.IsEnabled = SelectedOrdered()
+            .Any(i => !string.IsNullOrEmpty(i.OutputPath));
+    }
+
+    private void LogList_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control
+            && LogList.SelectedItem is string line)
+        {
+            CopyTextToClipboard(line, "ログ行");
+            e.Handled = true;
+        }
+    }
 
     // ---------- preview & open ----------
 

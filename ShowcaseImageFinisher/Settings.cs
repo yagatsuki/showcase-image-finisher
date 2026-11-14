@@ -17,6 +17,7 @@ public sealed class AppSettings
     public int Padding { get; set; }
     public bool SizePriority { get; set; }
     public string Theme { get; set; } = "Dark";
+    public double ListFontSize { get; set; } = 12;
     public double PreviewWidth { get; set; } = 252;
 }
 

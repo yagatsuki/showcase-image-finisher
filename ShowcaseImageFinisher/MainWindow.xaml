@@ -43,15 +43,42 @@
             </Grid.RowDefinitions>
             <ListView x:Name="FileList" Grid.Row="0"
                       SelectionChanged="FileList_SelectionChanged"
-                      MouseDoubleClick="FileList_MouseDoubleClick">
+                      MouseDoubleClick="FileList_MouseDoubleClick"
+                      KeyDown="FileList_KeyDown">
+                <ListView.ContextMenu>
+                    <ContextMenu Opened="FileListContextMenu_Opened">
+                        <MenuItem x:Name="CopyRowsItem" Header="選択行をコピー (Ctrl+C)"
+                                  Click="CopyRows_Click"/>
+                        <MenuItem x:Name="CopyNamesItem" Header="ファイル名をコピー"
+                                  Click="CopyNames_Click"/>
+                        <MenuItem x:Name="CopyOutputItem" Header="出力ファイルのパスをコピー"
+                                  Click="CopyOutputPaths_Click"/>
+                        <MenuItem x:Name="CopyInputItem" Header="入力ファイルのパスをコピー"
+                                  Click="CopyInputPaths_Click"/>
+                    </ContextMenu>
+                </ListView.ContextMenu>
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="ファイル名" Width="340"
-                                        DisplayMemberBinding="{Binding FileName}"/>
+                        <GridViewColumn Header="ファイル名" Width="340">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding FileName}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding FullPath}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Header="サイズ" Width="84"
                                         DisplayMemberBinding="{Binding SizeText}"/>
-                        <GridViewColumn Header="状態" Width="360"
-                                        DisplayMemberBinding="{Binding Status}"/>
+                        <GridViewColumn Header="状態" Width="360">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Status}"
+                                               TextWrapping="Wrap"
+                                               ToolTip="{Binding Status}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -122,6 +149,14 @@
                         <ComboBoxItem Content="ライト" Tag="Light"/>
                         <ComboBoxItem Content="標準" Tag="Standard"/>
                     </ComboBox>
+                    <TextBlock Text="リスト文字:" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <ComboBox x:Name="ListFontCombo" Width="72" Margin="6,2"
+                              SelectionChanged="ListFontCombo_SelectionChanged">
+                        <ComboBoxItem Content="小" Tag="11"/>
+                        <ComboBoxItem Content="標準" Tag="12"/>
+                        <ComboBoxItem Content="大" Tag="14"/>
+                        <ComboBoxItem Content="特大" Tag="16"/>
+                    </ComboBox>
                     <TextBlock Text="接尾辞:" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     <TextBox x:Name="SuffixBox" Text="_finished" Width="90" Margin="6,2" VerticalContentAlignment="Center"/>
                 </WrapPanel>
@@ -166,6 +201,7 @@
 
         <!-- Log -->
         <ListBox Grid.Row="4" x:Name="LogList" Margin="0,8,0,0"
-                 FontFamily="Consolas, Yu Gothic UI" FontSize="12"/>
+                 FontFamily="Consolas, Yu Gothic UI" FontSize="12"
+                 KeyDown="LogList_KeyDown"/>
     </Grid>
 </Window>
