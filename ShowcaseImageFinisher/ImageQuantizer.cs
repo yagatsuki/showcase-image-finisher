@@ -5,8 +5,7 @@ namespace ShowcaseImageFinisher;
 
 /// <summary>
 /// High-quality palette quantization through libimagequant
-/// (libimagequant.dll, the engine behind pngquant / TinyPNG), via
-/// P/Invoke. The function signatures and the liq_palette layout
+/// (libimagequant.dll), via P/Invoke. The function signatures and the liq_palette layout
 /// follow the library's public header (verified against 2.18.0 and
 /// 4.4.1, whose C API is identical for the calls used here).
 ///

@@ -176,7 +176,7 @@
                     <CheckBox x:Name="SizePriorityCheck" Content="容量優先（非可逆）" VerticalAlignment="Center" Margin="14,0,0,0"/>
                 </WrapPanel>
                 <TextBlock Foreground="{DynamicResource SubTextBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
-                           Text="容量優先オフ＝可逆で出力。オン＝PNGは256色へ量子化（TinyPNG方式）、WebPは画質90の非可逆、JPEG XLはdistance 1.0の非可逆になり、容量が大幅に減ります（画質はわずかに低下します）"/>
+                           Text="容量優先オフ＝可逆で出力。オン＝PNGは256色へ量子化、WebPは画質90の非可逆、JPEG XLはdistance 1.0の非可逆になり、容量が大幅に減ります（画質はわずかに低下します）"/>
                 <TextBlock x:Name="JxlNote" Foreground="{DynamicResource SubTextBrush}" FontSize="11"
                            Margin="0,4,0,0" TextWrapping="Wrap"/>
                 <TextBlock x:Name="LiqNote" Foreground="{DynamicResource SubTextBrush}" FontSize="11"

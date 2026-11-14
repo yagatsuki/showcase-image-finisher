@@ -32,7 +32,7 @@ public sealed record FinishOptions
     public int Padding { get; init; }
 
     /// <summary>Size-first (lossy) encoding instead of lossless:
-    /// PNG is quantized to a 256-color palette (TinyPNG-style),
+    /// PNG is quantized to a 256-color palette,
     /// WebP uses lossy quality 90, JPEG XL uses distance 1.0.</summary>
     public bool SizePriority { get; init; }
 
@@ -235,17 +235,23 @@ public static class ImageFinisher
         var sizePriority = options?.SizePriority == true;
         if (format == OutputFormat.Png && sizePriority)
         {
-            // Prefer libimagequant (TinyPNG-class quality) when its DLL
+            // Prefer libimagequant (higher quality) when its DLL
             // sits next to the exe; any failure falls back to the
             // built-in quantizer so the batch never breaks over it.
-            // The palette cap is 192, not 256: measured on photo-like
-            // cutouts, libimagequant at 256 colors produces dithered
-            // indices that compress slightly worse than the built-in
-            // 256-color output, while at 192 it is both smaller and
-            // lower-error than the built-in (MAE 0.53 vs 0.78).
+            // Parameters measured on real background-removed cutouts:
+            // the palette cap is 192, not 256 (at 256 the dithered
+            // indices compress slightly worse than the built-in
+            // output; at 192 it is smaller and lower-error), and the
+            // dithering level is 0.5, which shrank files a further
+            // 3-7% at unchanged error (full dithering is index noise
+            // that deflate cannot match).
             if (ImageQuantizer.IsAvailable)
             {
-                try { return ImageQuantizer.EncodeQuantizedPng(rgba, w, h, maxColors: 192); }
+                try
+                {
+                    return ImageQuantizer.EncodeQuantizedPng(rgba, w, h,
+                        maxColors: 192, ditheringLevel: 0.5f);
+                }
                 catch { /* fall through to the built-in quantizer */ }
             }
             return PngQuantizer.EncodeQuantizedPng(rgba, w, h);
