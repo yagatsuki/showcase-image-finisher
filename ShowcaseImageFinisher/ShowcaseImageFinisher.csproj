@@ -3,6 +3,11 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- Pin the RID so native dependencies (libSkiaSharp, onnxruntime)
+         are copied flat next to the exe instead of runtimes\ subfolders.
+         The app then keeps working even if the output folder is copied
+         around loosely. On ARM64 Windows the x64 build runs emulated. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>

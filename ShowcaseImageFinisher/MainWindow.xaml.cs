@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using SkiaSharp;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -47,6 +48,29 @@ public partial class MainWindow : Window
         JxlNote.Text = "JPEG XL: " + JxlEncoder.Diagnose() +
             "（libjxl 公式リリースの x64 版から、jxl.dll / jxl_threads.dll / jxl_cms.dll / brotli 系 DLL を exe と同じフォルダに置くと使えます。PNG / WebP はそのまま使えます）";
         UpdateCount();
+        RunStartupDiagnostics();
+    }
+
+    /// <summary>
+    /// Probes each native dependency once and writes the result to the
+    /// log, so a missing-DLL problem names itself without guesswork.
+    /// </summary>
+    private void RunStartupDiagnostics()
+    {
+        Log($"診断: プロセス {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}" +
+            $" / OS {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture}");
+        try
+        {
+            using var probe = new SKBitmap(1, 1);
+            Log("診断: libSkiaSharp 読み込み OK");
+        }
+        catch (Exception ex) { Log($"診断: libSkiaSharp 読み込み NG: {ex.GetType().Name}: {ex.Message}"); }
+        try
+        {
+            _ = Microsoft.ML.OnnxRuntime.OrtEnv.Instance();
+            Log("診断: onnxruntime 読み込み OK");
+        }
+        catch (Exception ex) { Log($"診断: onnxruntime 読み込み NG: {ex.GetType().Name}: {ex.Message}"); }
     }
 
     // ---------- file intake ----------
@@ -100,6 +124,7 @@ public partial class MainWindow : Window
         UpdateCount();
     }
 
+
     private static bool IsImage(string path) =>
         ImageExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
 
@@ -124,11 +149,13 @@ public partial class MainWindow : Window
         UpdateCount();
     }
 
+
     private void ClearAll_Click(object sender, RoutedEventArgs e)
     {
         _items.Clear();
         UpdateCount();
     }
+
 
     private void UpdateCount() => CountText.Text = $"{_items.Count} 件";
 
