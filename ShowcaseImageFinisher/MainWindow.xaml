@@ -2,14 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Showcase Image Finisher ― 背景除去 → トリミング → 可逆出力"
-        Width="900" Height="620" MinWidth="720" MinHeight="470">
+        Width="860" Height="580" MinWidth="620" MinHeight="430">
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="80"/>
+            <RowDefinition Height="68"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="96"/>
+            <RowDefinition Height="76"/>
         </Grid.RowDefinitions>
 
         <!-- Drop area: click to pick files, or drop files/folders -->
@@ -21,10 +21,10 @@
                        StrokeDashArray="5 3" Fill="#10888888" RadiusX="6" RadiusY="6"/>
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                         IsHitTestVisible="False">
-                <TextBlock Text="ここに画像ファイルをドロップ" FontSize="16"
+                <TextBlock Text="ここに画像ファイルをドロップ" FontSize="15"
                            HorizontalAlignment="Center"/>
                 <TextBlock Text="クリックでも選択できます（複数可・フォルダをドロップすると中の画像を読み込みます）"
-                           Foreground="Gray" HorizontalAlignment="Center"/>
+                           Foreground="Gray" HorizontalAlignment="Center" FontSize="11"/>
             </StackPanel>
         </Grid>
 
@@ -37,11 +37,11 @@
             <ListView x:Name="FileList" Grid.Row="0">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="ファイル名" Width="380"
+                        <GridViewColumn Header="ファイル名" Width="340"
                                         DisplayMemberBinding="{Binding FileName}"/>
-                        <GridViewColumn Header="サイズ" Width="90"
+                        <GridViewColumn Header="サイズ" Width="84"
                                         DisplayMemberBinding="{Binding SizeText}"/>
-                        <GridViewColumn Header="状態" Width="400"
+                        <GridViewColumn Header="状態" Width="360"
                                         DisplayMemberBinding="{Binding Status}"/>
                     </GridView>
                 </ListView.View>
@@ -53,46 +53,33 @@
             </StackPanel>
         </Grid>
 
-        <!-- Options -->
+        <!-- Options: WrapPanel rows, so anything that does not fit wraps
+             onto the next line instead of being clipped off-screen. -->
         <GroupBox Grid.Row="2" Header="設定" Margin="0,8,0,0">
-            <Grid Margin="6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="240"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="170"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="110"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="背景除去モデル:" VerticalAlignment="Center"/>
-                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="ModelCombo" Margin="6,2"/>
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="出力形式:" VerticalAlignment="Center" Margin="14,0,0,0"/>
-                <ComboBox Grid.Row="0" Grid.Column="3" x:Name="FormatCombo" Margin="6,2">
-                    <ComboBoxItem Content="PNG（可逆）" Tag="Png"/>
-                    <ComboBoxItem Content="WebP（可逆）" Tag="Webp"/>
-                    <ComboBoxItem Content="JPEG XL（可逆）" Tag="JpegXl"/>
-                </ComboBox>
-                <TextBlock Grid.Row="0" Grid.Column="4" Text="接尾辞:" VerticalAlignment="Center" Margin="14,0,0,0"/>
-                <TextBox Grid.Row="0" Grid.Column="5" x:Name="SuffixBox" Text="_finished" Margin="6,2" VerticalContentAlignment="Center"/>
-
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="出力先:" VerticalAlignment="Center" Margin="0,6,0,0"/>
-                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" Orientation="Horizontal" Margin="6,6,0,0">
-                    <RadioButton x:Name="OutSameRadio" Content="入力と同じフォルダ" IsChecked="True" VerticalAlignment="Center"/>
-                    <RadioButton x:Name="OutDirRadio" Content="指定フォルダ" Margin="14,0,0,0" VerticalAlignment="Center"/>
-                    <TextBox x:Name="OutDirBox" Width="380" Margin="8,0,0,0" VerticalContentAlignment="Center"/>
-                    <Button Content="参照..." Padding="10,2" Margin="6,0,0,0" Click="BrowseOutDir_Click"/>
-                    <CheckBox x:Name="OverwriteCheck" Content="同名ファイルを上書き" Margin="16,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-
-                <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6" x:Name="JxlNote"
-                           Foreground="Gray" Margin="0,6,0,0" TextWrapping="Wrap"/>
-            </Grid>
+            <StackPanel Margin="4">
+                <WrapPanel>
+                    <TextBlock Text="背景除去モデル:" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="ModelCombo" Width="200" Margin="6,2"/>
+                    <TextBlock Text="出力形式:" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <ComboBox x:Name="FormatCombo" Width="140" Margin="6,2">
+                        <ComboBoxItem Content="PNG（可逆）" Tag="Png"/>
+                        <ComboBoxItem Content="WebP（可逆）" Tag="Webp"/>
+                        <ComboBoxItem Content="JPEG XL（可逆）" Tag="JpegXl"/>
+                    </ComboBox>
+                    <TextBlock Text="接尾辞:" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <TextBox x:Name="SuffixBox" Text="_finished" Width="90" Margin="6,2" VerticalContentAlignment="Center"/>
+                </WrapPanel>
+                <WrapPanel Margin="0,4,0,0">
+                    <TextBlock Text="出力先:" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="OutSameRadio" Content="入力と同じフォルダ" IsChecked="True" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                    <RadioButton x:Name="OutDirRadio" Content="指定フォルダ" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <TextBox x:Name="OutDirBox" Width="290" Margin="8,2" VerticalContentAlignment="Center"/>
+                    <Button Content="参照..." Padding="10,2" Margin="2" Click="BrowseOutDir_Click"/>
+                    <CheckBox x:Name="OverwriteCheck" Content="同名ファイルを上書き" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                </WrapPanel>
+                <TextBlock x:Name="JxlNote" Foreground="Gray" FontSize="11"
+                           Margin="0,4,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
         </GroupBox>
 
         <!-- Run -->
