@@ -48,7 +48,8 @@ public partial class MainWindow : Window
         JxlNote.Text = "JPEG XL: " + JxlEncoder.Diagnose() +
             "（libjxl 公式リリースの x64 版から、jxl.dll / jxl_threads.dll / jxl_cms.dll / brotli 系 DLL を exe と同じフォルダに置くと使えます。PNG / WebP はそのまま使えます）";
         UpdateCount();
-        RunStartupDiagnostics();
+        try { RunStartupDiagnostics(); }
+        catch (Exception ex) { Log($"診断で例外: {ex.GetType().Name}: {ex.Message}"); }
     }
 
     /// <summary>

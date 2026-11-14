@@ -2,37 +2,4 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
-    <Application.Resources>
-        <!-- App icon as vector drawing (no binary asset):
-             a photo glyph inside a dashed cut line, on a blue rounded square. -->
-        <DrawingImage x:Key="AppIcon">
-            <DrawingImage.Drawing>
-                <DrawingGroup>
-                    <GeometryDrawing Brush="#2563EB">
-                        <GeometryDrawing.Geometry>
-                            <RectangleGeometry Rect="0,0,64,64" RadiusX="12" RadiusY="12"/>
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#F59E0B">
-                        <GeometryDrawing.Geometry>
-                            <EllipseGeometry Center="44,22" RadiusX="6" RadiusY="6"/>
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#FFFFFF">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry Figures="M10,50 L26,32 L36,44 L42,37 L54,50 Z"/>
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing>
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FFFFFF" Thickness="2.5" DashStyle="4,3"/>
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <RectangleGeometry Rect="7,7,50,50" RadiusX="8" RadiusY="8"/>
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup>
-            </DrawingImage.Drawing>
-        </DrawingImage>
-    </Application.Resources>
 </Application>
