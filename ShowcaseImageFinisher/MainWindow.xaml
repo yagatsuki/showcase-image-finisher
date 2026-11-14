@@ -1,7 +1,7 @@
 <Window x:Class="ShowcaseImageFinisher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Showcase Image Finisher ― 背景除去 → トリミング → 可逆出力"
+        Title="Showcase Image Finisher ― 背景除去 → トリミング → 出力"
         Width="1120" Height="580" MinWidth="620" MinHeight="430"
         Background="#161E2E" FontFamily="Segoe UI, Yu Gothic UI" FontSize="13">
     <Grid Margin="10">
@@ -111,9 +111,9 @@
                     <ComboBox x:Name="ModelCombo" Width="200" Margin="6,2"/>
                     <TextBlock Text="出力形式:" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     <ComboBox x:Name="FormatCombo" Width="140" Margin="6,2">
-                        <ComboBoxItem Content="PNG（可逆）" Tag="Png"/>
-                        <ComboBoxItem Content="WebP（可逆）" Tag="Webp"/>
-                        <ComboBoxItem Content="JPEG XL（可逆）" Tag="JpegXl"/>
+                        <ComboBoxItem Content="PNG" Tag="Png"/>
+                        <ComboBoxItem Content="WebP" Tag="Webp"/>
+                        <ComboBoxItem Content="JPEG XL" Tag="JpegXl"/>
                     </ComboBox>
                     <TextBlock Text="接尾辞:" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     <TextBox x:Name="SuffixBox" Text="_finished" Width="90" Margin="6,2" VerticalContentAlignment="Center"/>
@@ -131,7 +131,10 @@
                     <CheckBox x:Name="LargestCheck" Content="一番大きい被写体だけに合わせる" VerticalAlignment="Center" Margin="14,0,0,0"/>
                     <TextBlock Text="余白(px):" VerticalAlignment="Center" Margin="14,0,0,0"/>
                     <TextBox x:Name="PaddingBox" Text="0" Width="44" Margin="6,2" VerticalContentAlignment="Center"/>
+                    <CheckBox x:Name="SizePriorityCheck" Content="容量優先（非可逆）" VerticalAlignment="Center" Margin="14,0,0,0"/>
                 </WrapPanel>
+                <TextBlock Foreground="#94A3B8" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
+                           Text="容量優先オフ＝可逆で出力。オン＝PNGは256色へ量子化（TinyPNG方式）、WebPは画質90の非可逆、JPEG XLはdistance 1.0の非可逆になり、容量が大幅に減ります（画質はわずかに低下します）"/>
                 <TextBlock x:Name="JxlNote" Foreground="#94A3B8" FontSize="11"
                            Margin="0,4,0,0" TextWrapping="Wrap"/>
             </StackPanel>

@@ -21,7 +21,7 @@
     <AssemblyName>ShowcaseImageFinisher</AssemblyName>
     <RootNamespace>ShowcaseImageFinisher</RootNamespace>
     <Version>1.0.0</Version>
-    <Description>商品写真の仕上げツール: 背景除去（ONNX / rembg と同じモデル）→ 透明余白トリミング → 可逆PNG / WebP / JPEG XL 出力</Description>
+    <Description>商品写真の仕上げツール: 背景除去（ONNX / rembg と同じモデル）→ 透明余白トリミング → PNG / WebP / JPEG XL 出力（可逆／容量優先）</Description>
   </PropertyGroup>
 
   <ItemGroup>

@@ -95,6 +95,7 @@ public partial class MainWindow : Window
         DefringeCheck.IsChecked = _settings.Defringe;
         LargestCheck.IsChecked = _settings.LargestSubjectOnly;
         PaddingBox.Text = _settings.Padding.ToString();
+        SizePriorityCheck.IsChecked = _settings.SizePriority;
         if (_settings.PreviewWidth is >= 120 and <= 1200)
             PreviewColumn.Width = new GridLength(_settings.PreviewWidth);
     }
@@ -112,6 +113,7 @@ public partial class MainWindow : Window
         _settings.Defringe = DefringeCheck.IsChecked == true;
         _settings.LargestSubjectOnly = LargestCheck.IsChecked == true;
         _settings.Padding = ParsePadding();
+        _settings.SizePriority = SizePriorityCheck.IsChecked == true;
         if (PreviewCard.Visibility == Visibility.Visible && PreviewColumn.ActualWidth >= 120)
             _settings.PreviewWidth = PreviewColumn.ActualWidth;
         SettingsStore.Save(_settings);
@@ -364,6 +366,7 @@ public partial class MainWindow : Window
             Defringe = DefringeCheck.IsChecked == true,
             LargestSubjectOnly = LargestCheck.IsChecked == true,
             Padding = ParsePadding(),
+            SizePriority = SizePriorityCheck.IsChecked == true,
         };
 
         SetRunning(true);

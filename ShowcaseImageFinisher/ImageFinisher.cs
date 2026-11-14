@@ -31,12 +31,18 @@ public sealed record FinishOptions
     /// <summary>Transparent margin kept around the subject, in pixels.</summary>
     public int Padding { get; init; }
 
+    /// <summary>Size-first (lossy) encoding instead of lossless:
+    /// PNG is quantized to a 256-color palette (TinyPNG-style),
+    /// WebP uses lossy quality 90, JPEG XL uses distance 1.0.</summary>
+    public bool SizePriority { get; init; }
+
     public static readonly FinishOptions Default = new();
 }
 
 /// <summary>
 /// Decode (many formats via SkiaSharp), compose the cutout, trim the
-/// transparent margins, and encode losslessly (PNG / WebP / JPEG XL).
+/// transparent margins, and encode (PNG / WebP / JPEG XL, losslessly
+/// by default or size-first in SizePriority mode).
 /// The trim matches the trim-transparent-pixels tool: pixels with
 /// alpha &lt;= threshold (default 8) count as transparent, which removes
 /// the near-zero alpha noise background removal leaves behind.
@@ -217,11 +223,20 @@ public static class ImageFinisher
         return (best.MinX, best.MinY, best.MaxX, best.MaxY);
     }
 
-    /// <summary>Encodes trimmed RGBA in the chosen lossless format.</summary>
-    public static byte[] Encode(byte[] rgba, int w, int h, OutputFormat format)
+    /// <summary>Lossy WebP quality used in size-priority mode.</summary>
+    public const float WebpLossyQuality = 90f;
+
+    /// <summary>Encodes trimmed RGBA in the chosen format, losslessly
+    /// by default or size-first when <see cref="FinishOptions.SizePriority"/>
+    /// is set.</summary>
+    public static byte[] Encode(byte[] rgba, int w, int h, OutputFormat format,
+        FinishOptions? options = null)
     {
+        var sizePriority = options?.SizePriority == true;
+        if (format == OutputFormat.Png && sizePriority)
+            return PngQuantizer.EncodeQuantizedPng(rgba, w, h);
         if (format == OutputFormat.JpegXl)
-            return JxlEncoder.EncodeRgbaLossless(rgba, w, h);
+            return JxlEncoder.EncodeRgba(rgba, w, h, lossless: !sizePriority);
 
         using var bmp = new SKBitmap();
         unsafe
@@ -236,7 +251,9 @@ public static class ImageFinisher
             ?? throw new InvalidOperationException("画像ピクセルの取得に失敗しました");
         using var ms = new MemoryStream();
         var ok = format == OutputFormat.Webp
-            ? pixmap.Encode(ms, new SKWebpEncoderOptions(SKWebpEncoderCompression.Lossless, 100))
+            ? pixmap.Encode(ms, sizePriority
+                ? new SKWebpEncoderOptions(SKWebpEncoderCompression.Lossy, WebpLossyQuality)
+                : new SKWebpEncoderOptions(SKWebpEncoderCompression.Lossless, 100))
             : pixmap.Encode(ms, SKEncodedImageFormat.Png, 100);
         if (!ok) throw new InvalidOperationException("画像のエンコードに失敗しました");
         return ms.ToArray();
@@ -251,7 +268,7 @@ public static class ImageFinisher
         var (rgba, w, h) = DecodeRgba(bytes);
         var mask = BgRemover.PredictMask(def, modelPath, FlattenRgb(rgba, w, h), w, h);
         var (cut, cw, ch) = ComposeAndTrim(rgba, w, h, mask, 8, options);
-        var encoded = Encode(cut, cw, ch, format);
+        var encoded = Encode(cut, cw, ch, format, options);
         File.WriteAllBytes(outputPath, encoded);
         return (cw, ch, encoded.LongLength);
     }

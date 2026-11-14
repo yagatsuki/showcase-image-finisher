@@ -15,6 +15,7 @@ public sealed class AppSettings
     public bool Defringe { get; set; }
     public bool LargestSubjectOnly { get; set; }
     public int Padding { get; set; }
+    public bool SizePriority { get; set; }
     public double PreviewWidth { get; set; } = 252;
 }
 

@@ -82,7 +82,16 @@ public static class JxlEncoder
         catch { return null; }
     }
 
-    public static byte[] EncodeRgbaLossless(byte[] rgba, int w, int h)
+    public static byte[] EncodeRgbaLossless(byte[] rgba, int w, int h) =>
+        EncodeRgba(rgba, w, h, lossless: true);
+
+    /// <summary>
+    /// Encodes RGBA as JPEG XL. In lossy mode a frame distance of 1.0
+    /// is used (roughly quality 90: visually near-lossless, several
+    /// times smaller than lossless for photos — the JPEG XL analogue
+    /// of TinyPNG's size-first trade-off).
+    /// </summary>
+    public static byte[] EncodeRgba(byte[] rgba, int w, int h, bool lossless)
     {
         var enc = JxlEncoderCreate(IntPtr.Zero);
         if (enc == IntPtr.Zero)
@@ -101,7 +110,7 @@ public static class JxlEncoder
             info.Ysize = (uint)h;
             info.BitsPerSample = 8;
             info.ExponentBitsPerSample = 0;
-            info.UsesOriginalProfile = 1; // required for true lossless
+            info.UsesOriginalProfile = lossless ? 1 : 0; // 1 is required for true lossless
             info.NumColorChannels = 3;
             info.NumExtraChannels = 1;
             info.AlphaBits = 8;
@@ -126,7 +135,9 @@ public static class JxlEncoder
             var settings = JxlEncoderFrameSettingsCreate(enc, IntPtr.Zero);
             if (settings == IntPtr.Zero)
                 throw new InvalidOperationException("JPEG XL フレーム設定の作成に失敗しました");
-            CheckEnc(JxlEncoderSetFrameLossless(settings, 1), "JxlEncoderSetFrameLossless");
+            CheckEnc(JxlEncoderSetFrameLossless(settings, lossless ? 1 : 0), "JxlEncoderSetFrameLossless");
+            if (!lossless)
+                CheckEnc(JxlEncoderSetFrameDistance(settings, 1.0f), "JxlEncoderSetFrameDistance");
 
             var format = new JxlPixelFormat
             {
@@ -292,6 +303,9 @@ public static class JxlEncoder
 
     [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern int JxlEncoderSetFrameLossless(IntPtr frameSettings, int lossless);
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int JxlEncoderSetFrameDistance(IntPtr frameSettings, float distance);
 
     [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern int JxlEncoderAddImageFrame(IntPtr frameSettings,
