@@ -14,6 +14,23 @@ public partial class App : Application
             if (args.ExceptionObject is Exception ex) WriteCrashLog(ex);
         };
         base.OnStartup(e);
+        try
+        {
+            // Apply the saved theme before the window exists: the
+            // Standard theme must start without the Styles dictionary.
+            ThemeManager.Apply(SettingsStore.Load().Theme);
+            var window = new MainWindow();
+            MainWindow = window;
+            window.Show();
+        }
+        catch (Exception ex)
+        {
+            WriteCrashLog(ex);
+            MessageBox.Show(
+                "起動時エラーが発生しました。詳細を startup-error.log に保存しました。\n\n" + ex.Message,
+                "Showcase Image Finisher", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+        }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

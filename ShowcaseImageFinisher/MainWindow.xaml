@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Showcase Image Finisher ― 背景除去 → トリミング → 出力"
         Width="1120" Height="580" MinWidth="620" MinHeight="430"
-        Background="#161E2E" FontFamily="Segoe UI, Yu Gothic UI" FontSize="13">
+        Background="{DynamicResource BgBrush}" FontFamily="Segoe UI, Yu Gothic UI" FontSize="13">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="68"/>
@@ -18,14 +18,14 @@
               DragOver="DropArea_DragOver" DragLeave="DropArea_DragLeave"
               Drop="DropArea_Drop" MouseLeftButtonUp="DropArea_Click"
               Background="Transparent" Cursor="Hand">
-            <Rectangle x:Name="DropRect" Stroke="#46618C" StrokeThickness="2"
-                       StrokeDashArray="5 3" Fill="#1B2740" RadiusX="10" RadiusY="10"/>
+            <Rectangle x:Name="DropRect" Stroke="{DynamicResource DropStrokeBrush}" StrokeThickness="2"
+                       StrokeDashArray="5 3" Fill="{DynamicResource DropFillBrush}" RadiusX="10" RadiusY="10"/>
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                         IsHitTestVisible="False">
                 <TextBlock Text="ここに画像ファイルをドロップ" FontSize="15"
                            HorizontalAlignment="Center"/>
                 <TextBlock Text="クリックでも選択できます（複数可・フォルダをドロップすると中の画像を読み込みます）"
-                           Foreground="#94A3B8" HorizontalAlignment="Center" FontSize="11"/>
+                           Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Center" FontSize="11"/>
             </StackPanel>
         </Grid>
 
@@ -59,7 +59,7 @@
                 <Button Content="選択を削除" Padding="10,3" Click="RemoveSelected_Click"/>
                 <Button Content="全てクリア" Padding="10,3" Margin="8,0,0,0" Click="ClearAll_Click"/>
                 <Button Content="開く" Padding="10,3" Margin="8,0,0,0" Click="OpenSelected_Click"/>
-                <TextBlock x:Name="CountText" Margin="14,4,0,0" Foreground="#94A3B8"/>
+                <TextBlock x:Name="CountText" Margin="14,4,0,0" Foreground="{DynamicResource SubTextBrush}"/>
                 <CheckBox x:Name="PreviewCheck" Content="プレビュー"
                           Margin="16,0,0,0" VerticalAlignment="Center"
                           Checked="PreviewCheck_Changed" Unchecked="PreviewCheck_Changed"/>
@@ -68,12 +68,12 @@
 
             <GridSplitter x:Name="PreviewSplitter" Grid.Column="1" Width="6"
                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                          Background="#22304D" ResizeDirection="Columns"
+                          Background="{DynamicResource SplitterBrush}" ResizeDirection="Columns"
                           ResizeBehavior="PreviousAndNext"/>
 
             <!-- Preview card -->
             <Border x:Name="PreviewCard" Grid.Column="2" Margin="4,0,0,0"
-                    Background="#1C2942" BorderBrush="#334155" BorderThickness="1" CornerRadius="8">
+                    Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -89,12 +89,12 @@
                                      Margin="8,0,0,0" VerticalAlignment="Center" IsEnabled="False"
                                      Checked="PreviewMode_Changed"/>
                     </StackPanel>
-                    <Border Grid.Row="1" Background="{StaticResource CheckerBrush}" CornerRadius="6"
-                            BorderBrush="#334155" BorderThickness="1">
+                    <Border Grid.Row="1" Background="{DynamicResource CheckerBrush}" CornerRadius="6"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                         <Image x:Name="PreviewImage" Stretch="Uniform" Margin="4"/>
                     </Border>
                     <TextBlock Grid.Row="2" x:Name="PreviewInfo" Margin="0,6,0,0" FontSize="11"
-                               Foreground="#94A3B8" TextWrapping="Wrap"
+                               Foreground="{DynamicResource SubTextBrush}" TextWrapping="Wrap"
                                Text="ファイルを選ぶとここに表示されます"/>
                 </Grid>
             </Border>
@@ -102,8 +102,8 @@
 
         <!-- Options: WrapPanel rows, so anything that does not fit wraps
              onto the next line instead of being clipped off-screen. -->
-        <Border Grid.Row="2" Margin="0,8,0,0" Background="#1C2942"
-                BorderBrush="#334155" BorderThickness="1" CornerRadius="8">
+        <Border Grid.Row="2" Margin="0,8,0,0" Background="{DynamicResource PanelBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
             <StackPanel Margin="8,6,8,8">
                 <TextBlock Text="設定" FontWeight="SemiBold" Margin="2,0,0,4"/>
                 <WrapPanel>
@@ -114,6 +114,13 @@
                         <ComboBoxItem Content="PNG" Tag="Png"/>
                         <ComboBoxItem Content="WebP" Tag="Webp"/>
                         <ComboBoxItem Content="JPEG XL" Tag="JpegXl"/>
+                    </ComboBox>
+                    <TextBlock Text="テーマ:" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <ComboBox x:Name="ThemeCombo" Width="104" Margin="6,2"
+                              SelectionChanged="ThemeCombo_SelectionChanged">
+                        <ComboBoxItem Content="ダーク" Tag="Dark"/>
+                        <ComboBoxItem Content="ライト" Tag="Light"/>
+                        <ComboBoxItem Content="標準" Tag="Standard"/>
                     </ComboBox>
                     <TextBlock Text="接尾辞:" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     <TextBox x:Name="SuffixBox" Text="_finished" Width="90" Margin="6,2" VerticalContentAlignment="Center"/>
@@ -133,11 +140,11 @@
                     <TextBox x:Name="PaddingBox" Text="0" Width="44" Margin="6,2" VerticalContentAlignment="Center"/>
                     <CheckBox x:Name="SizePriorityCheck" Content="容量優先（非可逆）" VerticalAlignment="Center" Margin="14,0,0,0"/>
                 </WrapPanel>
-                <TextBlock Foreground="#94A3B8" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
+                <TextBlock Foreground="{DynamicResource SubTextBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
                            Text="容量優先オフ＝可逆で出力。オン＝PNGは256色へ量子化（TinyPNG方式）、WebPは画質90の非可逆、JPEG XLはdistance 1.0の非可逆になり、容量が大幅に減ります（画質はわずかに低下します）"/>
-                <TextBlock x:Name="JxlNote" Foreground="#94A3B8" FontSize="11"
+                <TextBlock x:Name="JxlNote" Foreground="{DynamicResource SubTextBrush}" FontSize="11"
                            Margin="0,4,0,0" TextWrapping="Wrap"/>
-                <TextBlock x:Name="LiqNote" Foreground="#94A3B8" FontSize="11"
+                <TextBlock x:Name="LiqNote" Foreground="{DynamicResource SubTextBrush}" FontSize="11"
                            Margin="0,2,0,0" TextWrapping="Wrap"/>
             </StackPanel>
         </Border>
@@ -149,7 +156,7 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" x:Name="RunButton" Content="実行" Padding="26,6" Style="{StaticResource PrimaryButton}"
+            <Button Grid.Column="0" x:Name="RunButton" Content="実行" Padding="26,6" Style="{DynamicResource PrimaryButton}"
                     FontSize="14" Click="Run_Click"/>
             <Button Grid.Column="1" x:Name="CancelButton" Content="中止" Padding="16,6"
                     Margin="8,0,0,0" IsEnabled="False" Click="Cancel_Click"/>

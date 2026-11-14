@@ -16,6 +16,7 @@ public sealed class AppSettings
     public bool LargestSubjectOnly { get; set; }
     public int Padding { get; set; }
     public bool SizePriority { get; set; }
+    public string Theme { get; set; } = "Dark";
     public double PreviewWidth { get; set; } = 252;
 }
 

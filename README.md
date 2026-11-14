@@ -32,6 +32,8 @@ flowchart LR
   合わせるトリミング、余白（px）の指定ができます
 - **プレビューと設定の保存** ― 選択したファイルの元画像／処理後を
   その場で確認でき、設定は次回起動時に復元されます
+- **テーマは3種** ― ダーク／ライト／標準（初期の既定デザイン）から
+  選択できます
 
 ## 使い方
 
@@ -112,6 +114,7 @@ DLL が無い場合は JPEG XL だけがエラーになり、PNG / WebP は
 - [ONNX Runtime](https://onnxruntime.ai/) ― 背景除去モデルの実行
 - [SkiaSharp](https://github.com/mono/SkiaSharp) ― 画像の入出力と加工
 - [libjxl](https://github.com/libjxl/libjxl) ― JPEG XL 出力（任意、DLL を別途配置）
+- [libimagequant](https://github.com/ImageOptim/libimagequant) ― PNG の量子化（任意、DLL を別途配置）
 
 ---
 

@@ -35,6 +35,8 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<JobItem> _items = new();
     private CancellationTokenSource? _cts;
     private readonly AppSettings _settings = SettingsStore.Load();
+    private string _theme = ThemeManager.Current;
+    private bool _applyingSettings;
 
     public MainWindow()
     {
@@ -71,24 +73,48 @@ public partial class MainWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
+        ApplyTitleBarTheme();
+    }
+
+    private void ApplyTitleBarTheme()
+    {
         try
         {
-            // Dark title bar to match the theme (Windows 10 2004+).
+            // Dark title bar only for the Dark theme (Windows 10 2004+).
             var hwnd = new WindowInteropHelper(this).Handle;
-            var dark = 1;
+            if (hwnd == IntPtr.Zero) return;
+            var dark = _theme == ThemeManager.Dark ? 1 : 0;
             _ = DwmSetWindowAttribute(hwnd, 20, ref dark, sizeof(int));
         }
         catch { /* older Windows keeps the default title bar */ }
+    }
+
+    private void ThemeCombo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_applyingSettings) return;
+        var tag = (ThemeCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+        var next = ThemeManager.Normalize(tag);
+        if (next == _theme) return;
+        var involvesStandard = next == ThemeManager.Standard || _theme == ThemeManager.Standard;
+        _theme = next;
+        ThemeManager.Apply(next);
+        ApplyTitleBarTheme();
+        if (involvesStandard)
+            Log("テーマ「標準」の切り替えは、再起動後に完全反映されます");
     }
 
     // ---------- settings persistence ----------
 
     private void ApplySettings()
     {
+        _applyingSettings = true;
         var def = ModelDef.All.FirstOrDefault(m => m.Id == _settings.ModelId);
         if (def is not null) ModelCombo.SelectedItem = def;
         foreach (System.Windows.Controls.ComboBoxItem it in FormatCombo.Items)
             if (it.Tag?.ToString() == _settings.FormatTag) { FormatCombo.SelectedItem = it; break; }
+        _theme = ThemeManager.Normalize(_settings.Theme);
+        foreach (System.Windows.Controls.ComboBoxItem it in ThemeCombo.Items)
+            if (it.Tag?.ToString() == _theme) { ThemeCombo.SelectedItem = it; break; }
         if (!string.IsNullOrWhiteSpace(_settings.Suffix)) SuffixBox.Text = _settings.Suffix;
         if (_settings.UseCustomDir) OutDirRadio.IsChecked = true;
         else OutSameRadio.IsChecked = true;
@@ -100,6 +126,7 @@ public partial class MainWindow : Window
         SizePriorityCheck.IsChecked = _settings.SizePriority;
         if (_settings.PreviewWidth is >= 120 and <= 1200)
             PreviewColumn.Width = new GridLength(_settings.PreviewWidth);
+        _applyingSettings = false;
     }
 
     private void SaveSettings()
@@ -116,6 +143,7 @@ public partial class MainWindow : Window
         _settings.LargestSubjectOnly = LargestCheck.IsChecked == true;
         _settings.Padding = ParsePadding();
         _settings.SizePriority = SizePriorityCheck.IsChecked == true;
+        _settings.Theme = _theme;
         if (PreviewCard.Visibility == Visibility.Visible && PreviewColumn.ActualWidth >= 120)
             _settings.PreviewWidth = PreviewColumn.ActualWidth;
         SettingsStore.Save(_settings);
