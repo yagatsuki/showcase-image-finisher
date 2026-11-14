@@ -33,7 +33,8 @@
         <Grid Grid.Row="1" Margin="0,8,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="6"/>
+                <ColumnDefinition x:Name="PreviewColumn" Width="252" MinWidth="0"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
             <Grid.RowDefinitions>
@@ -65,8 +66,13 @@
             </StackPanel>
             </Grid>
 
+            <GridSplitter x:Name="PreviewSplitter" Grid.Column="1" Width="6"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Background="#22304D" ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext"/>
+
             <!-- Preview card -->
-            <Border x:Name="PreviewCard" Grid.Column="1" Width="252" Margin="10,0,0,0"
+            <Border x:Name="PreviewCard" Grid.Column="2" Margin="4,0,0,0"
                     Background="#1C2942" BorderBrush="#334155" BorderThickness="1" CornerRadius="8">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>

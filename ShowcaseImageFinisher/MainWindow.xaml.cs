@@ -95,6 +95,8 @@ public partial class MainWindow : Window
         DefringeCheck.IsChecked = _settings.Defringe;
         LargestCheck.IsChecked = _settings.LargestSubjectOnly;
         PaddingBox.Text = _settings.Padding.ToString();
+        if (_settings.PreviewWidth is >= 120 and <= 1200)
+            PreviewColumn.Width = new GridLength(_settings.PreviewWidth);
     }
 
     private void SaveSettings()
@@ -110,6 +112,8 @@ public partial class MainWindow : Window
         _settings.Defringe = DefringeCheck.IsChecked == true;
         _settings.LargestSubjectOnly = LargestCheck.IsChecked == true;
         _settings.Padding = ParsePadding();
+        if (PreviewCard.Visibility == Visibility.Visible && PreviewColumn.ActualWidth >= 120)
+            _settings.PreviewWidth = PreviewColumn.ActualWidth;
         SettingsStore.Save(_settings);
     }
 
@@ -127,9 +131,15 @@ public partial class MainWindow : Window
 
     private void PreviewCheck_Changed(object sender, RoutedEventArgs e)
     {
-        if (PreviewCard is null) return;
-        PreviewCard.Visibility = PreviewCheck.IsChecked == true
-            ? Visibility.Visible : Visibility.Collapsed;
+        if (PreviewCard is null || PreviewSplitter is null) return;
+        var show = PreviewCheck.IsChecked == true;
+        if (!show && PreviewColumn.ActualWidth >= 120)
+            _settings.PreviewWidth = PreviewColumn.ActualWidth;
+        PreviewCard.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        PreviewSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        PreviewColumn.Width = show
+            ? new GridLength(Math.Clamp(_settings.PreviewWidth, 120, 1200))
+            : new GridLength(0);
     }
 
     private void RefreshPreview()
@@ -167,7 +177,7 @@ public partial class MainWindow : Window
         bmp.BeginInit();
         bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
         bmp.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreImageCache;
-        bmp.DecodePixelWidth = 520;
+        bmp.DecodePixelWidth = 800;
         bmp.UriSource = new Uri(path);
         bmp.EndInit();
         bmp.Freeze();

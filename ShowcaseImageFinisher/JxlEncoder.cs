@@ -87,6 +87,12 @@ public static class JxlEncoder
         var enc = JxlEncoderCreate(IntPtr.Zero);
         if (enc == IntPtr.Zero)
             throw new InvalidOperationException("JPEG XL エンコーダの作成に失敗しました");
+        void CheckEnc(int status, string api)
+        {
+            if (status != 0)
+                throw new InvalidOperationException(
+                    $"JPEG XL エンコードに失敗しました: {api} (status={status}, 詳細コード={JxlEncoderGetError(enc)})");
+        }
         try
         {
             var info = new JxlBasicInfo { Padding = new byte[100] };
@@ -101,7 +107,7 @@ public static class JxlEncoder
             info.AlphaBits = 8;
             info.AlphaExponentBits = 0;
             info.AlphaPremultiplied = 0;
-            Check(JxlEncoderSetBasicInfo(enc, ref info), "JxlEncoderSetBasicInfo");
+            CheckEnc(JxlEncoderSetBasicInfo(enc, ref info), "JxlEncoderSetBasicInfo");
 
             var color = new JxlColorEncoding
             {
@@ -115,24 +121,24 @@ public static class JxlEncoder
                 TransferFunction = 13, // JXL_TRANSFER_FUNCTION_SRGB
                 RenderingIntent = 0,   // JXL_RENDERING_INTENT_PERCEPTUAL
             };
-            Check(JxlEncoderSetColorEncoding(enc, ref color), "JxlEncoderSetColorEncoding");
+            CheckEnc(JxlEncoderSetColorEncoding(enc, ref color), "JxlEncoderSetColorEncoding");
 
             var settings = JxlEncoderFrameSettingsCreate(enc, IntPtr.Zero);
             if (settings == IntPtr.Zero)
                 throw new InvalidOperationException("JPEG XL フレーム設定の作成に失敗しました");
-            Check(JxlEncoderSetFrameLossless(settings, 1), "JxlEncoderSetFrameLossless");
+            CheckEnc(JxlEncoderSetFrameLossless(settings, 1), "JxlEncoderSetFrameLossless");
 
             var format = new JxlPixelFormat
             {
                 NumChannels = 4,
-                DataType = 0, // JXL_TYPE_UINT8
+                DataType = 2, // JXL_TYPE_UINT8 (0 is JXL_TYPE_FLOAT!)
                 Endianness = 0, // JXL_NATIVE_ENDIAN
                 Align = UIntPtr.Zero,
             };
             unsafe
             {
                 fixed (byte* p = rgba)
-                    Check(JxlEncoderAddImageFrame(settings, ref format, (IntPtr)p,
+                    CheckEnc(JxlEncoderAddImageFrame(settings, ref format, (IntPtr)p,
                         (UIntPtr)rgba.Length), "JxlEncoderAddImageFrame");
             }
             JxlEncoderCloseInput(enc);
@@ -265,6 +271,9 @@ public static class JxlEncoder
 
     [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr JxlEncoderCreate(IntPtr memoryManager);
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int JxlEncoderGetError(IntPtr enc);
 
     [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern void JxlEncoderDestroy(IntPtr enc);
