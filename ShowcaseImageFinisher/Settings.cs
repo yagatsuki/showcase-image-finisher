@@ -22,6 +22,7 @@ public sealed class AppSettings
     public double SizeColumnWidth { get; set; } = 84;
     public double StatusColumnWidth { get; set; } = 360;
     public double PreviewWidth { get; set; } = 252;
+    public double LogHeight { get; set; } = 76;
 }
 
 public static class SettingsStore

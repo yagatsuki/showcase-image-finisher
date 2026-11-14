@@ -10,7 +10,8 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="76"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition x:Name="LogRow" Height="76"/>
         </Grid.RowDefinitions>
 
         <!-- Drop area: click to pick files, or drop files/folders -->
@@ -200,9 +201,32 @@
                          VerticalAlignment="Center"/>
         </Grid>
 
+        <!-- Log height drag strip. A manual drag (not GridSplitter):
+             the rows between the main area and the log are Auto-sized,
+             which GridSplitter would resize along with the log. -->
+        <Border Grid.Row="4" x:Name="LogSplitter" Height="6"
+                VerticalAlignment="Center" Cursor="SizeNS"
+                Background="{DynamicResource LineBrush}"
+                ToolTip="ドラッグでログの高さを変更"
+                MouseLeftButtonDown="LogSplitter_Down"
+                MouseMove="LogSplitter_Move"
+                MouseLeftButtonUp="LogSplitter_Up"/>
+
         <!-- Log -->
-        <ListBox Grid.Row="4" x:Name="LogList" Margin="0,8,0,0"
+        <ListBox Grid.Row="5" x:Name="LogList"
                  FontFamily="Consolas, Yu Gothic UI" FontSize="12"
-                 KeyDown="LogList_KeyDown"/>
+                 KeyDown="LogList_KeyDown">
+            <ListBox.ContextMenu>
+                <ContextMenu x:Name="LogMenu" Opened="LogMenu_Opened">
+                    <MenuItem x:Name="LogCopyItem" Header="選択行をコピー"
+                              InputGestureText="Ctrl+C" Click="LogCopy_Click"/>
+                    <MenuItem x:Name="LogCopyAllItem" Header="すべてコピー"
+                              Click="LogCopyAll_Click"/>
+                    <Separator/>
+                    <MenuItem x:Name="LogClearItem" Header="ログをクリア"
+                              Click="LogClear_Click"/>
+                </ContextMenu>
+            </ListBox.ContextMenu>
+        </ListBox>
     </Grid>
 </Window>

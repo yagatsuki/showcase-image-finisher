@@ -134,6 +134,8 @@ public partial class MainWindow : Window
         SizePriorityCheck.IsChecked = _settings.SizePriority;
         if (_settings.PreviewWidth is >= 120 and <= 1200)
             PreviewColumn.Width = new GridLength(_settings.PreviewWidth);
+        if (_settings.LogHeight is >= 40 and <= 500)
+            LogRow.Height = new GridLength(_settings.LogHeight);
         _applyingSettings = false;
     }
 
@@ -158,6 +160,8 @@ public partial class MainWindow : Window
         if (StatusColumn.Width >= 40) _settings.StatusColumnWidth = StatusColumn.Width;
         if (PreviewCard.Visibility == Visibility.Visible && PreviewColumn.ActualWidth >= 120)
             _settings.PreviewWidth = PreviewColumn.ActualWidth;
+        if (LogRow.Height.IsAbsolute && LogRow.Height.Value >= 40)
+            _settings.LogHeight = LogRow.Height.Value;
         SettingsStore.Save(_settings);
     }
 
@@ -275,6 +279,63 @@ public partial class MainWindow : Window
             CopyTextToClipboard(line, "ログ行");
             e.Handled = true;
         }
+    }
+
+    private void LogCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (LogList.SelectedItem is string line)
+            CopyTextToClipboard(line, "ログ行");
+    }
+
+    private void LogCopyAll_Click(object sender, RoutedEventArgs e)
+    {
+        var lines = LogList.Items.Cast<string>().ToList();
+        if (lines.Count == 0) return;
+        CopyTextToClipboard(string.Join("\r\n", lines), $"ログ全{lines.Count}行");
+    }
+
+    private void LogClear_Click(object sender, RoutedEventArgs e) =>
+        LogList.Items.Clear();
+
+    private void LogMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        LogCopyItem.IsEnabled = LogList.SelectedItem is string;
+        var has = LogList.Items.Count > 0;
+        LogCopyAllItem.IsEnabled = has;
+        LogClearItem.IsEnabled = has;
+    }
+
+    // ---------- log area resize (manual drag strip) ----------
+
+    private bool _logDrag;
+    private double _logDragStartY;
+    private double _logDragStartHeight;
+
+    private void LogSplitter_Down(object sender, MouseButtonEventArgs e)
+    {
+        _logDrag = true;
+        _logDragStartY = e.GetPosition(this).Y;
+        _logDragStartHeight = LogRow.ActualHeight;
+        LogSplitter.CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void LogSplitter_Move(object sender, MouseEventArgs e)
+    {
+        if (!_logDrag) return;
+        var dy = e.GetPosition(this).Y - _logDragStartY;
+        // Dragging up grows the log, dragging down shrinks it.
+        LogRow.Height = new GridLength(
+            Math.Clamp(_logDragStartHeight - dy, 40, 500));
+    }
+
+    private void LogSplitter_Up(object sender, MouseButtonEventArgs e)
+    {
+        if (!_logDrag) return;
+        _logDrag = false;
+        LogSplitter.ReleaseMouseCapture();
+        SaveSettings();
+        e.Handled = true;
     }
 
     // ---------- preview & open ----------
