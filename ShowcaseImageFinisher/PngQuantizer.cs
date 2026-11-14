@@ -30,6 +30,21 @@ public static class PngQuantizer
         return WriteIndexedPng(palette, indices, w, h);
     }
 
+    /// <summary>
+    /// Writes an indexed PNG from an external palette + indices
+    /// (palette is RGBA, 4 bytes per color). Used by the libimagequant
+    /// path in <see cref="ImageQuantizer"/>, which supplies its own
+    /// palette and remapping but reuses this writer.
+    /// </summary>
+    public static byte[] EncodeIndexedPng(byte[] palette, byte[] indices, int w, int h)
+    {
+        if (indices.Length != w * h)
+            throw new ArgumentException("インデックスのサイズが画像サイズと一致しません", nameof(indices));
+        if (palette.Length % 4 != 0 || palette.Length / 4 is < 1 or > MaxColors)
+            throw new ArgumentException("パレットの色数が不正です", nameof(palette));
+        return WriteIndexedPng(palette, indices, w, h);
+    }
+
     // ---------- quantization ----------
 
     private readonly struct HistEntry
@@ -301,7 +316,7 @@ public static class PngQuantizer
 
         var raw = ApplyFilters(indices, w, h);
         using var idat = new MemoryStream();
-        using (var zlib = new ZLibStream(idat, CompressionLevel.Optimal, leaveOpen: true))
+        using (var zlib = new ZLibStream(idat, CompressionLevel.SmallestSize, leaveOpen: true))
             zlib.Write(raw, 0, raw.Length);
         WriteChunk(ms, "IDAT", idat.ToArray());
         WriteChunk(ms, "IEND", Array.Empty<byte>());

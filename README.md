@@ -67,6 +67,20 @@ flowchart LR
 モデルは [rembg](https://github.com/danielgatis/rembg) の公式配布
 （ONNX 形式）をそのまま利用しています。
 
+## PNG の容量優先を高品質にする場合（任意）
+
+「容量優先」オン時の PNG 量子化は、内蔵の量子化でも処理できますが、
+[pngquant](https://pngquant.org) / TinyPNG の中核ライブラリである
+libimagequant の DLL を置くと、より高品質な量子化になります
+（パレット上限は実測に基づき192色で使います）。
+
+- MSYS2 のパッケージ `mingw-w64-x86_64-libimagequant` などから
+  x64 版 `libimagequant.dll` を取り出し、exe と同じフォルダに
+  置いてください。依存は Windows 標準 DLL のみです
+- 置いてあるかどうかは、アプリ下部の注記で確認できます
+- libimagequant は GPLv3（または商用ライセンス）のライブラリです。
+  ソースは https://github.com/ImageOptim/libimagequant で入手できます
+
 ## JPEG XL を使う場合
 
 libjxl 公式リリース（0.11 以降）の **x64 版**パッケージ

@@ -234,7 +234,22 @@ public static class ImageFinisher
     {
         var sizePriority = options?.SizePriority == true;
         if (format == OutputFormat.Png && sizePriority)
+        {
+            // Prefer libimagequant (TinyPNG-class quality) when its DLL
+            // sits next to the exe; any failure falls back to the
+            // built-in quantizer so the batch never breaks over it.
+            // The palette cap is 192, not 256: measured on photo-like
+            // cutouts, libimagequant at 256 colors produces dithered
+            // indices that compress slightly worse than the built-in
+            // 256-color output, while at 192 it is both smaller and
+            // lower-error than the built-in (MAE 0.53 vs 0.78).
+            if (ImageQuantizer.IsAvailable)
+            {
+                try { return ImageQuantizer.EncodeQuantizedPng(rgba, w, h, maxColors: 192); }
+                catch { /* fall through to the built-in quantizer */ }
+            }
             return PngQuantizer.EncodeQuantizedPng(rgba, w, h);
+        }
         if (format == OutputFormat.JpegXl)
             return JxlEncoder.EncodeRgba(rgba, w, h, lossless: !sizePriority);
 

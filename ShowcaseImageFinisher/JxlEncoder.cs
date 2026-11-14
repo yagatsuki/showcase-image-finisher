@@ -19,18 +19,8 @@ public static class JxlEncoder
 {
     private const string Dll = "jxl";
 
-    static JxlEncoder()
-    {
-        // Resolve jxl.dll strictly from the exe's own folder, regardless of
-        // the process working directory or PATH.
-        NativeLibrary.SetDllImportResolver(typeof(JxlEncoder).Assembly, (name, asm, path) =>
-        {
-            if (!name.Equals(Dll, StringComparison.OrdinalIgnoreCase)) return IntPtr.Zero;
-            var candidate = Path.Combine(AppContext.BaseDirectory, "jxl.dll");
-            return File.Exists(candidate) && NativeLibrary.TryLoad(candidate, out var handle)
-                ? handle : IntPtr.Zero;
-        });
-    }
+    // jxl.dll is resolved from the exe's own folder by the assembly-wide
+    // resolver in NativeDllResolver (.NET allows only one per assembly).
 
     public static bool IsAvailable => Diagnose().StartsWith("利用できます", StringComparison.Ordinal);
 
