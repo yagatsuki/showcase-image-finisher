@@ -19,7 +19,7 @@ flowchart LR
   途中で中止もできます
 - **出力は可逆が既定、「容量優先」も選択可** ― PNG / WebP /
   JPEG XL から選択。容量優先をオンにすると非可逆で大幅に小さく
-  なります（PNG は256色へ量子化＝TinyPNG方式、WebP は画質90、
+  なります（PNG は256色へ量子化、WebP は画質90、
   JPEG XL は distance 1.0）
 - **背景除去は rembg と同一方式** ― 同じ ONNX モデルを使い、前処理
   （リサイズ → 画像の最大値で正規化 → チャンネルごとの標準化）も
@@ -32,7 +32,6 @@ flowchart LR
   合わせるトリミング、余白（px）の指定ができます
 - **プレビューと設定の保存** ― 選択したファイルの元画像／処理後を
   その場で確認でき、設定は次回起動時に復元されます
-- **ダークテーマ** ― 紺基調の配色で、タイトルバーまで揃えてあります
 
 ## 使い方
 
@@ -70,13 +69,13 @@ flowchart LR
 ## PNG の容量優先を高品質にする場合（任意）
 
 「容量優先」オン時の PNG 量子化は、内蔵の量子化でも処理できますが、
-[pngquant](https://pngquant.org) / TinyPNG の中核ライブラリである
 libimagequant の DLL を置くと、より高品質な量子化になります
 （パレット上限は実測に基づき192色で使います）。
 
 - MSYS2 のパッケージ `mingw-w64-x86_64-libimagequant` などから
   x64 版 `libimagequant.dll` を取り出し、exe と同じフォルダに
   置いてください。依存は Windows 標準 DLL のみです
+  入手先：[MSYS2 のパッケージページ](https://packages.msys2.org/packages/mingw-w64-x86_64-libimagequant)
 - 置いてあるかどうかは、アプリ下部の注記で確認できます
 - libimagequant は GPLv3（または商用ライセンス）のライブラリです。
   ソースは https://github.com/ImageOptim/libimagequant で入手できます

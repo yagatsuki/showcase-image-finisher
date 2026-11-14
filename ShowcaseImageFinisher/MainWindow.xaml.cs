@@ -57,7 +57,7 @@ public partial class MainWindow : Window
         JxlNote.Text = "JPEG XL: " + JxlEncoder.Diagnose() +
             "（libjxl 公式リリースの x64 版から、jxl.dll / jxl_threads.dll / jxl_cms.dll / brotli 系 DLL を exe と同じフォルダに置くと使えます。PNG / WebP はそのまま使えます）";
         LiqNote.Text = "PNG容量優先: " + ImageQuantizer.Diagnose() +
-            "（libimagequant.dll を exe と同じフォルダに置くと TinyPNG 相当の高品質量子化になり、無い場合は内蔵量子化で処理します）";
+            "（libimagequant.dll を exe と同じフォルダに置くと高品質な量子化になり、無い場合は内蔵量子化で処理します）";
         ApplySettings();
         Closing += (_, _) => SaveSettings();
         UpdateCount();
