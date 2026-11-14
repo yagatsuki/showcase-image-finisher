@@ -39,6 +39,11 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // Defaults that raise events must be set here, not in XAML:
+        // an IsChecked="True" attribute fires Checked while the parser is
+        // still building the window, before later controls exist.
+        PreviewCheck.IsChecked = true;
+        PreviewBeforeRadio.IsChecked = true;
         // Never open larger than the screen's work area (small displays,
         // high DPI scaling): the settings must stay reachable.
         var wa = SystemParameters.WorkArea;
@@ -120,12 +125,17 @@ public partial class MainWindow : Window
 
     private void PreviewMode_Changed(object sender, RoutedEventArgs e) => RefreshPreview();
 
-    private void PreviewCheck_Changed(object sender, RoutedEventArgs e) =>
+    private void PreviewCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (PreviewCard is null) return;
         PreviewCard.Visibility = PreviewCheck.IsChecked == true
             ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     private void RefreshPreview()
     {
+        if (PreviewImage is null || PreviewInfo is null
+            || PreviewBeforeRadio is null || PreviewAfterRadio is null) return;
         var item = SelectedItem;
         if (item is null)
         {
