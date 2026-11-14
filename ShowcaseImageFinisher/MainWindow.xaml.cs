@@ -178,12 +178,39 @@ public partial class MainWindow : Window
 
     private void CopyTextToClipboard(string text, string what)
     {
-        try
+        // CLIPBRD_E_CANT_OPEN: another process (clipboard manager,
+        // remote desktop, screen capture, ...) holds the clipboard
+        // open for a moment. That is transient contention, so retry a
+        // few times with a short pause instead of failing outright.
+        for (var attempt = 1; ; attempt++)
         {
-            Clipboard.SetText(text);
-            Log($"{what}をコピーしました");
+            try
+            {
+                Clipboard.SetText(text);
+                Log($"{what}をコピーしました");
+                return;
+            }
+            catch (Exception ex) when (attempt < 8 && IsClipboardBusy(ex))
+            {
+                System.Threading.Thread.Sleep(60);
+            }
+            catch (Exception ex)
+            {
+                Log($"コピーに失敗しました: {ex.Message}");
+                return;
+            }
         }
-        catch (Exception ex) { Log($"コピーに失敗しました: {ex.Message}"); }
+    }
+
+    private static bool IsClipboardBusy(Exception ex)
+    {
+        for (var e = ex; e != null; e = e.InnerException)
+        {
+            if (e is System.Runtime.InteropServices.ExternalException ee &&
+                (uint)ee.ErrorCode == 0x800401D0) // CLIPBRD_E_CANT_OPEN
+                return true;
+        }
+        return false;
     }
 
     private void CopyRows_Click(object sender, RoutedEventArgs e)
