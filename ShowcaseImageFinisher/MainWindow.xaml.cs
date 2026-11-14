@@ -14,6 +14,7 @@ public sealed class JobItem : INotifyPropertyChanged
     public required string FullPath { get; init; }
     public string FileName => Path.GetFileName(FullPath);
     public string SizeText { get; init; } = "";
+    public string? OutputPath { get; set; }
     private string _status = "待機";
     public string Status
     {
@@ -33,6 +34,7 @@ public partial class MainWindow : Window
 
     private readonly ObservableCollection<JobItem> _items = new();
     private CancellationTokenSource? _cts;
+    private readonly AppSettings _settings = SettingsStore.Load();
 
     public MainWindow()
     {
@@ -49,6 +51,8 @@ public partial class MainWindow : Window
         FormatCombo.SelectedIndex = 1; // WebP (lossless)
         JxlNote.Text = "JPEG XL: " + JxlEncoder.Diagnose() +
             "（libjxl 公式リリースの x64 版から、jxl.dll / jxl_threads.dll / jxl_cms.dll / brotli 系 DLL を exe と同じフォルダに置くと使えます。PNG / WebP はそのまま使えます）";
+        ApplySettings();
+        Closing += (_, _) => SaveSettings();
         UpdateCount();
         try { RunStartupDiagnostics(); }
         catch (Exception ex) { Log($"診断で例外: {ex.GetType().Name}: {ex.Message}"); }
@@ -68,6 +72,115 @@ public partial class MainWindow : Window
             _ = DwmSetWindowAttribute(hwnd, 20, ref dark, sizeof(int));
         }
         catch { /* older Windows keeps the default title bar */ }
+    }
+
+    // ---------- settings persistence ----------
+
+    private void ApplySettings()
+    {
+        var def = ModelDef.All.FirstOrDefault(m => m.Id == _settings.ModelId);
+        if (def is not null) ModelCombo.SelectedItem = def;
+        foreach (System.Windows.Controls.ComboBoxItem it in FormatCombo.Items)
+            if (it.Tag?.ToString() == _settings.FormatTag) { FormatCombo.SelectedItem = it; break; }
+        if (!string.IsNullOrWhiteSpace(_settings.Suffix)) SuffixBox.Text = _settings.Suffix;
+        if (_settings.UseCustomDir) OutDirRadio.IsChecked = true;
+        else OutSameRadio.IsChecked = true;
+        OutDirBox.Text = _settings.CustomDir;
+        OverwriteCheck.IsChecked = _settings.Overwrite;
+        DefringeCheck.IsChecked = _settings.Defringe;
+        LargestCheck.IsChecked = _settings.LargestSubjectOnly;
+        PaddingBox.Text = _settings.Padding.ToString();
+    }
+
+    private void SaveSettings()
+    {
+        _settings.ModelId = (ModelCombo.SelectedItem as ModelDef)?.Id ?? _settings.ModelId;
+        _settings.FormatTag =
+            (FormatCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString()
+            ?? _settings.FormatTag;
+        _settings.Suffix = SuffixBox.Text;
+        _settings.UseCustomDir = OutDirRadio.IsChecked == true;
+        _settings.CustomDir = OutDirBox.Text;
+        _settings.Overwrite = OverwriteCheck.IsChecked == true;
+        _settings.Defringe = DefringeCheck.IsChecked == true;
+        _settings.LargestSubjectOnly = LargestCheck.IsChecked == true;
+        _settings.Padding = ParsePadding();
+        SettingsStore.Save(_settings);
+    }
+
+    private int ParsePadding() =>
+        Math.Clamp(int.TryParse(PaddingBox.Text, out var v) ? v : 0, 0, 200);
+
+    // ---------- preview & open ----------
+
+    private JobItem? SelectedItem => FileList.SelectedItem as JobItem;
+
+    private void FileList_SelectionChanged(
+        object sender, System.Windows.Controls.SelectionChangedEventArgs e) => RefreshPreview();
+
+    private void PreviewMode_Changed(object sender, RoutedEventArgs e) => RefreshPreview();
+
+    private void PreviewCheck_Changed(object sender, RoutedEventArgs e) =>
+        PreviewCard.Visibility = PreviewCheck.IsChecked == true
+            ? Visibility.Visible : Visibility.Collapsed;
+
+    private void RefreshPreview()
+    {
+        var item = SelectedItem;
+        if (item is null)
+        {
+            PreviewImage.Source = null;
+            PreviewInfo.Text = "ファイルを選ぶとここに表示されます";
+            PreviewAfterRadio.IsEnabled = false;
+            return;
+        }
+        var hasOutput = item.OutputPath is not null && File.Exists(item.OutputPath);
+        PreviewAfterRadio.IsEnabled = hasOutput;
+        if (!hasOutput) PreviewBeforeRadio.IsChecked = true;
+        var showAfter = hasOutput && PreviewAfterRadio.IsChecked == true;
+        var path = showAfter ? item.OutputPath! : item.FullPath;
+        try
+        {
+            PreviewImage.Source = LoadPreviewBitmap(path);
+            PreviewInfo.Text = $"{(showAfter ? "処理後" : "元画像")}: {Path.GetFileName(path)}";
+        }
+        catch
+        {
+            PreviewImage.Source = null;
+            PreviewInfo.Text = "この形式はプレビューを表示できません";
+        }
+    }
+
+    private static System.Windows.Media.Imaging.BitmapImage LoadPreviewBitmap(string path)
+    {
+        var bmp = new System.Windows.Media.Imaging.BitmapImage();
+        bmp.BeginInit();
+        bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+        bmp.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreImageCache;
+        bmp.DecodePixelWidth = 520;
+        bmp.UriSource = new Uri(path);
+        bmp.EndInit();
+        bmp.Freeze();
+        return bmp;
+    }
+
+    private void OpenSelected_Click(object sender, RoutedEventArgs e) => OpenSelected();
+
+    private void FileList_MouseDoubleClick(
+        object sender, System.Windows.Input.MouseButtonEventArgs e) => OpenSelected();
+
+    private void OpenSelected()
+    {
+        var item = SelectedItem;
+        if (item is null) return;
+        var path = item.OutputPath is not null && File.Exists(item.OutputPath)
+            ? item.OutputPath : item.FullPath;
+        try
+        {
+            System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception ex) { Log($"開けませんでした: {ex.Message}"); }
     }
 
     /// <summary>
@@ -226,6 +339,13 @@ public partial class MainWindow : Window
             _ => OutputFormat.Png,
         };
 
+        var options = new FinishOptions
+        {
+            Defringe = DefringeCheck.IsChecked == true,
+            LargestSubjectOnly = LargestCheck.IsChecked == true,
+            Padding = ParsePadding(),
+        };
+
         SetRunning(true);
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
@@ -264,7 +384,9 @@ public partial class MainWindow : Window
                 try
                 {
                     var result = await Task.Run(
-                        () => ImageFinisher.ProcessFile(item.FullPath, outPath, def, modelPath, format), ct);
+                        () => ImageFinisher.ProcessFile(item.FullPath, outPath, def, modelPath, format, options), ct);
+                    item.OutputPath = outPath;
+                    if (ReferenceEquals(SelectedItem, item)) RefreshPreview();
                     item.Status = $"完了 → {Path.GetFileName(outPath)}（{result.W}x{result.H}, {result.Bytes / 1024} KB）";
                     Log($"{item.FileName}: 完了 {result.W}x{result.H}");
                     ok++;

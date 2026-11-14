@@ -17,6 +17,23 @@ public static class OutputFormatInfo
     };
 }
 
+/// <summary>Optional finishing touches applied while composing.</summary>
+public sealed record FinishOptions
+{
+    /// <summary>Pull semi-transparent edge colors toward the subject
+    /// color, removing the background-colored halo around the outline.</summary>
+    public bool Defringe { get; init; }
+
+    /// <summary>Trim to the largest connected subject only, ignoring
+    /// other objects (logos, badges) that survived removal.</summary>
+    public bool LargestSubjectOnly { get; init; }
+
+    /// <summary>Transparent margin kept around the subject, in pixels.</summary>
+    public int Padding { get; init; }
+
+    public static readonly FinishOptions Default = new();
+}
+
 /// <summary>
 /// Decode (many formats via SkiaSharp), compose the cutout, trim the
 /// transparent margins, and encode losslessly (PNG / WebP / JPEG XL).
@@ -73,14 +90,17 @@ public static class ImageFinisher
     /// alpha), cleans near-zero alpha noise, and trims to the content.
     /// </summary>
     public static (byte[] Rgba, int W, int H) ComposeAndTrim(
-        byte[] rgba, int w, int h, byte[] mask, int threshold = 8)
+        byte[] rgba, int w, int h, byte[] mask, int threshold = 8,
+        FinishOptions? options = null)
     {
+        options ??= FinishOptions.Default;
         var a = (byte[])rgba.Clone();
         for (var i = 0; i < w * h; i++)
         {
             var alpha = mask[i] * a[i * 4 + 3] / 255;
             a[i * 4 + 3] = (byte)(alpha <= threshold ? 0 : alpha);
         }
+        if (options.Defringe) DefringeEdges(a, w, h);
         // The bounding box counts only majority-opaque pixels as content.
         // Background removers leave faint residue (alpha up to ~60) where
         // other objects used to be (logos, badges); counting it would hold
@@ -97,12 +117,104 @@ public static class ImageFinisher
             if (y > maxY) maxY = y;
         }
         if (maxX < 0) throw new InvalidDataException("背景除去の結果、画像全体が透明になりました");
+        if (options.LargestSubjectOnly)
+            (minX, minY, maxX, maxY) = LargestComponentBox(a, w, h, contentThreshold);
+        if (options.Padding > 0)
+        {
+            minX = Math.Max(0, minX - options.Padding);
+            minY = Math.Max(0, minY - options.Padding);
+            maxX = Math.Min(w - 1, maxX + options.Padding);
+            maxY = Math.Min(h - 1, maxY + options.Padding);
+        }
         var (nw, nh) = (maxX - minX + 1, maxY - minY + 1);
         if (nw == w && nh == h) return (a, w, h);
         var cropped = new byte[nw * nh * 4];
         for (var y = 0; y < nh; y++)
             Buffer.BlockCopy(a, ((minY + y) * w + minX) * 4, cropped, y * nw * 4, nw * 4);
         return (cropped, nw, nh);
+    }
+
+    private static readonly (int Dx, int Dy)[] Neighbors = { (-1, 0), (1, 0), (0, -1), (0, 1) };
+
+    /// <summary>
+    /// Decontaminates semi-transparent edge pixels: their color is pulled
+    /// toward the nearest opaque neighbor (the subject's own color), which
+    /// removes the halo of background color around the outline.
+    /// </summary>
+    private static void DefringeEdges(byte[] a, int w, int h)
+    {
+        var src = (byte[])a.Clone();
+        for (var y = 0; y < h; y++)
+        for (var x = 0; x < w; x++)
+        {
+            var i = (y * w + x) * 4;
+            var alpha = src[i + 3];
+            if (alpha == 0 || alpha == 255) continue;
+            foreach (var (dx, dy) in Neighbors)
+            {
+                var nx = x + dx; var ny = y + dy;
+                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                var j = (ny * w + nx) * 4;
+                if (src[j + 3] < 250) continue;
+                a[i] = (byte)(src[i] * 0.35 + src[j] * 0.65);
+                a[i + 1] = (byte)(src[i + 1] * 0.35 + src[j + 1] * 0.65);
+                a[i + 2] = (byte)(src[i + 2] * 0.35 + src[j + 2] * 0.65);
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Bounding box of the largest connected component of content pixels
+    /// (union-find labeling, then per-component statistics).
+    /// </summary>
+    private static (int MinX, int MinY, int MaxX, int MaxY) LargestComponentBox(
+        byte[] a, int w, int h, int contentThreshold)
+    {
+        var labels = new int[w * h];
+        var parent = new List<int> { 0 };
+        int Find(int v)
+        {
+            while (parent[v] != v) { parent[v] = parent[parent[v]]; v = parent[v]; }
+            return v;
+        }
+        for (var y = 0; y < h; y++)
+        for (var x = 0; x < w; x++)
+        {
+            var idx = y * w + x;
+            if (a[idx * 4 + 3] <= contentThreshold) continue;
+            var left = x > 0 ? labels[idx - 1] : 0;
+            var top = y > 0 ? labels[idx - w] : 0;
+            if (left == 0 && top == 0)
+            {
+                labels[idx] = parent.Count;
+                parent.Add(parent.Count);
+            }
+            else if (left != 0 && top != 0)
+            {
+                var rl = Find(left); var rt = Find(top);
+                if (rl != rt) parent[Math.Max(rl, rt)] = Math.Min(rl, rt);
+                labels[idx] = Math.Min(rl, rt);
+            }
+            else labels[idx] = left != 0 ? left : top;
+        }
+        var stats = new Dictionary<int, (int Count, int MinX, int MinY, int MaxX, int MaxY)>();
+        for (var y = 0; y < h; y++)
+        for (var x = 0; x < w; x++)
+        {
+            var l = labels[y * w + x];
+            if (l == 0) continue;
+            var r = Find(l);
+            if (!stats.TryGetValue(r, out var s)) s = (0, w, h, -1, -1);
+            s.Count++;
+            if (x < s.MinX) s.MinX = x;
+            if (x > s.MaxX) s.MaxX = x;
+            if (y < s.MinY) s.MinY = y;
+            if (y > s.MaxY) s.MaxY = y;
+            stats[r] = s;
+        }
+        var best = stats.Values.MaxBy(s => s.Count);
+        return (best.MinX, best.MinY, best.MaxX, best.MaxY);
     }
 
     /// <summary>Encodes trimmed RGBA in the chosen lossless format.</summary>
@@ -133,12 +245,12 @@ public static class ImageFinisher
     /// <summary>Full pipeline for one file. Returns output size info.</summary>
     public static (int W, int H, long Bytes) ProcessFile(
         string inputPath, string outputPath, ModelDef def, string modelPath,
-        OutputFormat format)
+        OutputFormat format, FinishOptions? options = null)
     {
         var bytes = File.ReadAllBytes(inputPath);
         var (rgba, w, h) = DecodeRgba(bytes);
         var mask = BgRemover.PredictMask(def, modelPath, FlattenRgb(rgba, w, h), w, h);
-        var (cut, cw, ch) = ComposeAndTrim(rgba, w, h, mask);
+        var (cut, cw, ch) = ComposeAndTrim(rgba, w, h, mask, 8, options);
         var encoded = Encode(cut, cw, ch, format);
         File.WriteAllBytes(outputPath, encoded);
         return (cw, ch, encoded.LongLength);
