@@ -39,9 +39,13 @@ public static class JxlEncoder
     {
         var dir = AppContext.BaseDirectory;
         var dll = Path.Combine(dir, "jxl.dll");
-        var threads = Path.Combine(dir, "jxl_threads.dll");
         if (!File.Exists(dll))
             return $"jxl.dll が exe のフォルダにありません（{dir}）";
+        var arch = PeArchitecture(dll);
+        var process = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture;
+        if (arch is not null && arch != process.ToString())
+            return $"jxl.dll が {arch} 版のため読み込めません（このアプリは {process} 版）。" +
+                   $"公式リリースの {process} 版パッケージから取り直してください";
         try
         {
             var version = JxlEncoderVersion();
@@ -49,10 +53,33 @@ public static class JxlEncoder
         }
         catch (Exception ex)
         {
-            var extra = File.Exists(threads) ? "" : "、jxl_threads.dll もありません";
+            var missing = new[] { "jxl_threads.dll", "jxl_cms.dll", "brotlicommon.dll", "brotlidec.dll", "brotlienc.dll" }
+                .Where(f => !File.Exists(Path.Combine(dir, f))).ToList();
+            var extra = missing.Count > 0 ? $"、依存 DLL の不足: {string.Join(", ", missing)}" : "";
             return $"jxl.dll はありますが読み込めませんでした: {ex.GetType().Name}: {ex.Message}{extra}" +
                    "（VC++ 再頒布可能ランタイムの不足でもこの状態になります）";
         }
+    }
+
+    /// <summary>Reads the PE header of a DLL and returns "X64" / "X86" / "Arm64".</summary>
+    private static string? PeArchitecture(string path)
+    {
+        try
+        {
+            using var fs = File.OpenRead(path);
+            using var br = new BinaryReader(fs);
+            fs.Seek(0x3C, SeekOrigin.Begin);
+            var peOffset = br.ReadInt32();
+            fs.Seek(peOffset + 4, SeekOrigin.Begin);
+            return br.ReadUInt16() switch
+            {
+                0x8664 => "X64",
+                0x14C => "X86",
+                0xAA64 => "Arm64",
+                _ => null,
+            };
+        }
+        catch { return null; }
     }
 
     public static byte[] EncodeRgbaLossless(byte[] rgba, int w, int h)
