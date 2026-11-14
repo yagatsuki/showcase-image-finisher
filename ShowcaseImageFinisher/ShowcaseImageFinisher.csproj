@@ -3,11 +3,13 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <!-- Pin the RID so native dependencies (libSkiaSharp, onnxruntime)
-         are copied flat next to the exe instead of runtimes\ subfolders.
-         The app then keeps working even if the output folder is copied
-         around loosely. On ARM64 Windows the x64 build runs emulated. -->
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- No RID pin here: the plain build stays architecture-neutral and
+         runs natively on both x64 and ARM64 Windows. For a flat,
+         copy-friendly folder use a publish profile (win-x64 / win-arm64)
+         from Properties/PublishProfiles. -->
+    <!-- Explorer/taskbar exe icon: used automatically when app.ico is
+         placed in this project folder (binary, distributed separately). -->
+    <ApplicationIcon Condition="Exists('app.ico')">app.ico</ApplicationIcon>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
