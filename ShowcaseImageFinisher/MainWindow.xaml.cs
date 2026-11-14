@@ -34,13 +34,18 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // Never open larger than the screen's work area (small displays,
+        // high DPI scaling): the settings must stay reachable.
+        var wa = SystemParameters.WorkArea;
+        if (Width > wa.Width) Width = wa.Width * 0.96;
+        if (Height > wa.Height) Height = wa.Height * 0.96;
         FileList.ItemsSource = _items;
         ModelCombo.ItemsSource = ModelDef.All;
         ModelCombo.DisplayMemberPath = nameof(ModelDef.Display);
         ModelCombo.SelectedIndex = 0;
         FormatCombo.SelectedIndex = 1; // WebP (lossless)
         JxlNote.Text = "JPEG XL: " + JxlEncoder.Diagnose() +
-            "（libjxl 公式リリースの jxl.dll / jxl_threads.dll を exe と同じフォルダに置くと使えます。PNG / WebP はそのまま使えます）";
+            "（libjxl 公式リリースの x64 版から、jxl.dll / jxl_threads.dll / jxl_cms.dll / brotli 系 DLL を exe と同じフォルダに置くと使えます。PNG / WebP はそのまま使えます）";
         UpdateCount();
     }
 

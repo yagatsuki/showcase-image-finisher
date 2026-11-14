@@ -1,15 +1,16 @@
 <Window x:Class="ShowcaseImageFinisher.MainWindow"
+        Icon="{StaticResource AppIcon}"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Showcase Image Creator ― 背景除去 → トリミング → 可逆出力"
-        Width="920" Height="660" MinWidth="720" MinHeight="520">
+        Title="Showcase Image Finisher ― 背景除去 → トリミング → 可逆出力"
+        Width="900" Height="620" MinWidth="720" MinHeight="470">
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="86"/>
+            <RowDefinition Height="80"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="110"/>
+            <RowDefinition Height="96"/>
         </Grid.RowDefinitions>
 
         <!-- Drop area: click to pick files, or drop files/folders -->

@@ -61,10 +61,21 @@ flowchart LR
 
 ## JPEG XL を使う場合
 
-libjxl 公式リリース（0.11 以降）の Windows 用バイナリから
-`jxl.dll` と `jxl_threads.dll` を取り出し、このアプリの exe と
-同じフォルダに置いてください。無い場合は JPEG XL だけがエラーに
-なり、PNG / WebP はそのまま使えます。
+libjxl 公式リリース（0.11 以降）の **x64 版**パッケージ
+`jxl-x64-windows.zip` から、次の DLL をすべて取り出し、この
+アプリの exe と同じフォルダに置いてください。
+
+- `jxl.dll`、`jxl_threads.dll`、`jxl_cms.dll`
+- `brotlicommon.dll`、`brotlidec.dll`、`brotlienc.dll`
+
+32bit（x86）版や ARM64 版など、ビット数の違う DLL は読み込め
+ません。アプリ下部の注記に、置いた DLL のビット数や不足して
+いる依存 DLL が表示されます。依存 DLL をすべて置いても
+読み込めない場合は、Microsoft Visual C++ 再頒布可能
+ランタイム（x64）のインストールが必要です
+（https://aka.ms/vs/17/release/vc_redist.x64.exe ）。
+DLL が無い場合は JPEG XL だけがエラーになり、PNG / WebP は
+そのまま使えます。
 
 - libjxl: https://github.com/libjxl/libjxl/releases
 
