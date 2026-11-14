@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using SkiaSharp;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -50,6 +52,22 @@ public partial class MainWindow : Window
         UpdateCount();
         try { RunStartupDiagnostics(); }
         catch (Exception ex) { Log($"診断で例外: {ex.GetType().Name}: {ex.Message}"); }
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        try
+        {
+            // Dark title bar to match the theme (Windows 10 2004+).
+            var hwnd = new WindowInteropHelper(this).Handle;
+            var dark = 1;
+            _ = DwmSetWindowAttribute(hwnd, 20, ref dark, sizeof(int));
+        }
+        catch { /* older Windows keeps the default title bar */ }
     }
 
     /// <summary>
