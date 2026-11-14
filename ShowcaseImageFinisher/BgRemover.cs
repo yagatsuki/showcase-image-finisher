@@ -76,20 +76,34 @@ public static class BgRemover
 
     private static byte[] ResizeRgb(byte[] rgb, int w, int h, int nw, int nh)
     {
+        // Skia surfaces are 4 bytes per pixel (Rgb888x): expand the packed
+        // 24-bit triplets first, resize, then compact back to triplets.
+        // (Installing the 3-byte buffer directly makes InstallPixels fail.)
+        var srcBuf = new byte[w * h * 4];
+        for (int i = 0, j = 0; i < rgb.Length; i += 3, j += 4)
+        {
+            srcBuf[j] = rgb[i]; srcBuf[j + 1] = rgb[i + 1]; srcBuf[j + 2] = rgb[i + 2];
+            srcBuf[j + 3] = 255;
+        }
         using var src = new SKBitmap();
         unsafe
         {
-            fixed (byte* p = rgb)
+            fixed (byte* p = srcBuf)
                 if (!src.InstallPixels(
                         new SKImageInfo(w, h, SKColorType.Rgb888x, SKAlphaType.Opaque),
-                        (IntPtr)p, w * 3))
+                        (IntPtr)p, w * 4))
                     throw new InvalidOperationException("画像バッファの取り込みに失敗しました");
         }
         using var dst = src.Resize(
                 new SKImageInfo(nw, nh, SKColorType.Rgb888x, SKAlphaType.Opaque), Sampling)
             ?? throw new InvalidOperationException("画像のリサイズに失敗しました");
+        var px = new byte[nw * nh * 4];
+        Marshal.Copy(dst.GetPixels(), px, 0, px.Length);
         var outBytes = new byte[nw * nh * 3];
-        Marshal.Copy(dst.GetPixels(), outBytes, 0, outBytes.Length);
+        for (int i = 0, j = 0; i < px.Length; i += 4, j += 3)
+        {
+            outBytes[j] = px[i]; outBytes[j + 1] = px[i + 1]; outBytes[j + 2] = px[i + 2];
+        }
         return outBytes;
     }
 
