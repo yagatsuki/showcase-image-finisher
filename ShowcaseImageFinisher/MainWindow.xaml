@@ -47,7 +47,8 @@
                       KeyDown="FileList_KeyDown">
                 <ListView.ContextMenu>
                     <ContextMenu Opened="FileListContextMenu_Opened">
-                        <MenuItem x:Name="CopyRowsItem" Header="選択行をコピー (Ctrl+C)"
+                        <MenuItem x:Name="CopyRowsItem" Header="選択行をコピー"
+                                  InputGestureText="Ctrl+C"
                                   Click="CopyRows_Click"/>
                         <MenuItem x:Name="CopyNamesItem" Header="ファイル名をコピー"
                                   Click="CopyNames_Click"/>
@@ -59,7 +60,7 @@
                 </ListView.ContextMenu>
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="ファイル名" Width="340">
+                        <GridViewColumn x:Name="NameColumn" Header="ファイル名" Width="340">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding FileName}"
@@ -68,9 +69,9 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Header="サイズ" Width="84"
+                        <GridViewColumn x:Name="SizeColumn" Header="サイズ" Width="84"
                                         DisplayMemberBinding="{Binding SizeText}"/>
-                        <GridViewColumn Header="状態" Width="360">
+                        <GridViewColumn x:Name="StatusColumn" Header="状態" Width="360">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Status}"

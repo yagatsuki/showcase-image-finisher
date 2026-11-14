@@ -120,6 +120,9 @@ public partial class MainWindow : Window
         foreach (System.Windows.Controls.ComboBoxItem it in ListFontCombo.Items)
             if (double.TryParse(it.Tag?.ToString(), out var fs) && fs == _settings.ListFontSize)
             { ListFontCombo.SelectedItem = it; break; }
+        if (_settings.NameColumnWidth >= 40) NameColumn.Width = _settings.NameColumnWidth;
+        if (_settings.SizeColumnWidth >= 30) SizeColumn.Width = _settings.SizeColumnWidth;
+        if (_settings.StatusColumnWidth >= 40) StatusColumn.Width = _settings.StatusColumnWidth;
         if (!string.IsNullOrWhiteSpace(_settings.Suffix)) SuffixBox.Text = _settings.Suffix;
         if (_settings.UseCustomDir) OutDirRadio.IsChecked = true;
         else OutSameRadio.IsChecked = true;
@@ -150,6 +153,9 @@ public partial class MainWindow : Window
         _settings.SizePriority = SizePriorityCheck.IsChecked == true;
         _settings.Theme = _theme;
         _settings.ListFontSize = FileList.FontSize;
+        if (NameColumn.Width >= 40) _settings.NameColumnWidth = NameColumn.Width;
+        if (SizeColumn.Width >= 30) _settings.SizeColumnWidth = SizeColumn.Width;
+        if (StatusColumn.Width >= 40) _settings.StatusColumnWidth = StatusColumn.Width;
         if (PreviewCard.Visibility == Visibility.Visible && PreviewColumn.ActualWidth >= 120)
             _settings.PreviewWidth = PreviewColumn.ActualWidth;
         SettingsStore.Save(_settings);

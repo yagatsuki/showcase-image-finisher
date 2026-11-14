@@ -18,6 +18,9 @@ public sealed class AppSettings
     public bool SizePriority { get; set; }
     public string Theme { get; set; } = "Dark";
     public double ListFontSize { get; set; } = 12;
+    public double NameColumnWidth { get; set; } = 340;
+    public double SizeColumnWidth { get; set; } = 84;
+    public double StatusColumnWidth { get; set; } = 360;
     public double PreviewWidth { get; set; } = 252;
 }
 
