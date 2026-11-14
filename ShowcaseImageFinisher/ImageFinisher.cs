@@ -81,11 +81,16 @@ public static class ImageFinisher
             var alpha = mask[i] * a[i * 4 + 3] / 255;
             a[i * 4 + 3] = (byte)(alpha <= threshold ? 0 : alpha);
         }
+        // The bounding box counts only majority-opaque pixels as content.
+        // Background removers leave faint residue (alpha up to ~60) where
+        // other objects used to be (logos, badges); counting it would hold
+        // the box open to the image edge even though nothing is visible.
+        const int contentThreshold = 128;
         var (minX, minY, maxX, maxY) = (w, h, -1, -1);
         for (var y = 0; y < h; y++)
         for (var x = 0; x < w; x++)
         {
-            if (a[(y * w + x) * 4 + 3] == 0) continue;
+            if (a[(y * w + x) * 4 + 3] <= contentThreshold) continue;
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;
